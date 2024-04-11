@@ -1,44 +1,53 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, Pressable, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, Pressable,} from 'react-native';
 import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+
 
 const Footer = () => {
 
   const navigation = useNavigation();
        
+  const onPressHome = () => {
+    navigation.navigate('Accueil');
+  };
   const onPressRencontre = () => {
     navigation.navigate('Rencontres');
   };
+  const onPressMatch = () => {
+    navigation.navigate('Match');
+  };
+  const onPressMessage = () => {
+    navigation.navigate('Discussions');
+  };
 
 
-
-
+  
+  
 
 
   return (
     <View style={styles.footerfixed}>
       <View style={styles.footer}>
 
-        <Pressable style={styles.Icon} onPress={() => this.changeText('localisation')}>
-          <Ionicons name="home" size={25} color="lightgray" />
-          <Text style={styles.colortext}>Accueil</Text>
+        <Pressable style={styles.Icon} onPress={onPressHome}>
+          <Ionicons name="home" size={20} color="#f94990" />
+          <Text style={styles.Accueil}>Accueil</Text>
         </Pressable>
 
         <Pressable style={styles.Icon} onPress={onPressRencontre}>
-          <Ionicons name="location" size={25} color="#f94990" />
+          <Ionicons name="location" size={20} color="lightgrey" />
           <Text style={styles.colortext}>Rencontres</Text>
         </Pressable>
 
 
-        <Pressable style={styles.Icon} onPress={() => this.changeText('localisation')}>
-          <Ionicons name="chatbubble-ellipses" size={25} color="#f94990" />
+        <Pressable style={styles.Icon} onPress={onPressMessage}>
+          <Ionicons name="chatbubble-ellipses" size={20} color="lightgrey" />
           <Text style={styles.colortext}>Messages</Text>
         </Pressable>
 
-        <Pressable style={styles.Icon} onPress={() => this.changeText('heart')}>
-          <Ionicons name="heart" size={25} color="#f94990" />
+        <Pressable style={styles.Icon} onPress={onPressMatch}>
+          <Ionicons name="heart" size={20} color="lightgrey" />
           <Text style={styles.colortext}>Match</Text>
         </Pressable>
 
@@ -56,6 +65,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'flex-end',
     bottom: 0,
+    backgroundColor:'white',
   
   },
   footer: {
@@ -71,9 +81,15 @@ const styles = StyleSheet.create({
   Icon: {
     alignItems: 'center',
   },
-  colortext: {
-    color: '#06668f',
+  Accueil:{
+    color: '#f94990',
     fontWeight: 'bold',
+    fontSize:10,
+  },
+  colortext: {
+    color: 'lightgrey',
+    fontWeight: 'bold',
+    fontSize:10,
 
   }
 });

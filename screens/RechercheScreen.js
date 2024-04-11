@@ -4,7 +4,7 @@ import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NavSearch from '../components/NavSearch'
 import Suggestion from '../components/Suggestion'
-import Invitation from '../components/Invitation'
+
 
 
 const logo = require('../assets/images/logo.png');

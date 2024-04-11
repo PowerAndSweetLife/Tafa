@@ -7,12 +7,14 @@ import ContenuNotif from '../components/ContenuNotif'
 
 
 
-
 const NotificationScreen = () => {
+
   return (
     <SafeAreaView style={styles.Container}>
+      
        <NavBarNotif />
-       <ContenuNotif />   
+       <ContenuNotif />
+        
 
     </SafeAreaView>
   );

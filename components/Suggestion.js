@@ -1,76 +1,84 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, Pressable, TextInput, SafeAreaView, ScrollView, FlatList } from 'react-native';
-import React from 'react'
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, Text, View, Image, Pressable, ScrollView, SafeAreaView } from 'react-native';
+import React from 'react';
+import { BASE_URL } from "../helper/url";
+import { useState, useEffect } from 'react';
+import SkeletonItem from '../components/skeleton/skeletonSuggestion';
+import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
+import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from './context/usercontext';
 
 
 
 
 const Suggestion = () => {
-    // Liste complète d'utilisateurs (fictive)
-    const allUsers = [
-        { id: 1, name: 'nDeba', imageSource: require('../assets/images/test4.jpg') },
-        { id: 2, name: 'nirymamy' ,imageSource: require('../assets/images/nirymamy.jpg') },
-        { id: 3, name: 'User 3' ,imageSource: require('../assets/images/test5.jpg') },
-        { id: 4, name: 'User 4' ,imageSource: require('../assets/images/test2.jpg') },
-        { id: 5, name: 'User 5' ,imageSource: require('../assets/images/test.jpg') },
-        // ... Ajoutez d'autres utilisateurs au besoin
-    ];
+    const { userData } = useUser();
+    const Id = userData && userData.Id ? userData.Id : 'defaultUserId';
+    const navigation = useNavigation();
+    const [donnees, setDonnees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const onPressProfil = (userData) => {
+        console.log("Données utilisateur:", userData);
+        navigation.navigate('Profil', { userData: userData });
+      };
 
-    // Liste d'amis (fictive)
-    const friends = [
-        { id: 2, name: 'User 2',imageSource: require('../assets/images/test3.jpg') },
-        { id: 4, name: 'User 4' },
-    ];
-     // Tableau pour stocker les éléments JSX générés
-  const elementsJSX = [];
+      useEffect(() => {
+        fetch(BASE_URL + 'users')
+          .then(response => response.json())
+          .then(data => {
+            // Filtrer les données pour ne pas inclure l'utilisateur connecté
+            const filteredData = data.filter(item => item.Id !== Id);
+            setDonnees(filteredData);
+            setTimeout(() => setLoading(false), 5000);
+          })
+          .catch(error => {
+            console.error('Erreur lors de la récupération des données:', error);
+            setLoading(false);
+          });
+          
+      }, []);
+      const defaultAvatar = (sexe) => {
+        return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+      };
 
-  // Boucle for pour générer les éléments JSX
-  for (let i = 0; i < allUsers.length; i++) {
-    const item =  allUsers[i];
-    elementsJSX.push(
-        <View style={styles.cardsugg}>
-        <View style={styles.ImagContainer}>
-            <Image source={item.imageSource} style={styles.image} />
-        </View>
-
-        <Text style={styles.Nom}>{item.name}</Text>
-        
-    </View>
-    );
-
-  };
-
-    // Filtrer les suggestions en excluant les amis
-    const friendSuggestions = allUsers.filter(user => !friends.some(friend => friend.id === user.id));
-
-    const addFriend = (user) => {
-        // Implémentez la logique pour ajouter un utilisateur en tant qu'ami
-        console.log(`Ajouter ${user.name} en tant qu'ami`);
+    const renderSkeletonItems = () => {
+        const skeletonItems = [];
+        for (let i = 0; i < 5; i++) {
+            skeletonItems.push(<SkeletonItem key={i} />);
+        }
+        return skeletonItems;
     };
+
+    const renderSuggestionItems = () => {
+        return donnees.map((item, index) => (
+            
+            <View style={styles.cardsugg} key={index}>
+            <Pressable onPress={() => onPressProfil(item)}>
+                <View style={styles.ImagContainer}>
+                    <Image
+                          source={item.img_link ? { uri: BASE_URL + item.img_link } : defaultAvatar(item.Sexe)}
+                        style={styles.image}
+                    />
+                </View>
+                <Text style={styles.Nom}>{item.Nom}</Text>
+                </Pressable>
+            </View>
+        ));
+    };
+
     return (
-
-
         <View style={styles.Container}>
             <Text style={styles.Text}>Suggestions</Text>
             <ScrollView horizontal={true} style={styles.scrollView} showsHorizontalScrollIndicator={false}>
                 <View style={styles.contenusug}>
-
-
-                {elementsJSX}
-
-
-
-
+                    {loading ? renderSkeletonItems() : renderSuggestionItems()}
                 </View>
             </ScrollView>
-            <View style={{ alignItems: 'center', justifyContent: 'center', }}>
-                <Pressable style={styles.Boutton}><Text style={{ textAlign: 'center', marginTop: 5, fontWeight: 'bold', }}>Voir Tout</Text></Pressable>
+            <View style={styles.contenuVoir}>
+                <Pressable style={styles.Boutton}><Text style={styles.VoirTout}>Voir Tout</Text></Pressable>
             </View>
         </View>
-
-    )
+    );
 }
 
 
@@ -80,14 +88,15 @@ const styles = StyleSheet.create({
     },
     contenusug: {
         display: 'flex',
+        width:'100%',
         flexDirection: 'row',
         flex: 1,
-        justifyContent: 'space-around',
-        
+        justifyContent: 'space-betwen',
+                                                
     },
     cardsugg: {
-        width: 190,
-        height: 280,
+        width: 150,
+        height: 230,
         borderRadius: 10,
         marginLeft: 10,
         borderStyle: 'solid',
@@ -98,7 +107,7 @@ const styles = StyleSheet.create({
 
     },
     Text: {
-        fontSize: 20,
+        fontSize: 15,
         paddingTop: 10,
         paddingBottom: 10,
         fontWeight: 'bold',
@@ -116,29 +125,39 @@ const styles = StyleSheet.create({
         borderStyle: 'solid',
         borderColor: 'lightgrey',
         borderWidth: 2,
+
     },
     Boutton: {
         width: 200,
-        height: 30,
+        height: 20,
         textAlign: 'center',
-        borderRadius: 10,
-        marginTop: -10,
-        borderStyle: 'solid',
-        borderColor: '#f94990',
-        borderWidth: 2,
+        borderRadius: 17,
+        paddingTop:3,
+        backgroundColor:'#79328d',
         
+    },
+    VoirTout:{
+        textAlign: 'center',
+         fontWeight: 'bold',
+        fontSize:10,
+        color:'white',
     },
     image: {
         width: '100%',
-        height: 240,
+        height: 200,
         borderRadius: 7,
     },
     Nom:{
         marginTop:7,
         marginLeft:2,
-        fontSize:20,
+        fontSize:12,
     
-    }
+    },
+    contenuVoir:{
+        alignItems:'center',
+        justifyContent:'flex-start',
+        top:-80,
+    },
     
 
 

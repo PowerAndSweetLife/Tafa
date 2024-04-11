@@ -1,6 +1,4 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, Pressable, TextInput, Button, SafeAreaView, } from 'react-native';
-
+import { StyleSheet,  View, Pressable, TextInput,  } from 'react-native';
 import React from 'react'
 import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -16,31 +14,10 @@ const NavSearchmodif = () => {
 
     const navigation = useNavigation();
     const onPressBack = () => {
-        navigation.navigate('Recherche');
-    };
-    /*const [searchText, setSearchText] = useState('');
-        const [lastSearch, setLastSearch] = useState('');
-        const [searchResults, setSearchResults] = useState([]);
-    
-        const handleInputChange = (inputText) => {
-            setSearchText(inputText);
-        };
-        const handleClearPress = () => {
-            setLastSearch('');
-        };
-    
-        const handleSearch = () => {
-            setLastSearch(searchText);
-            // Autres actions de recherche...
-        };
-    
-        const renderSearchResult = ({ item }) => {
-            return (
-                <View style={styles.resultItem}>
-                    <Text>{item}</Text>
-                </View>
-            );
-        };*/
+        navigation.goBack();
+      };
+  
+        
     const [searchTerm, setSearchTerm] = useState('');
 
 
@@ -57,11 +34,11 @@ const NavSearchmodif = () => {
             <View style={styles.NavBar}>
                 <View style={styles.IconBack}>
                     <Pressable onPress={onPressBack}>
-                        <Ionicons name="ios-arrow-back" size={30} color="#f94990" />
+                        <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
                     </Pressable>
 
                 </View>
-                <View>
+                <View style={styles.ContenuInput}>
 
                     <TextInput style={styles.Input} placeholder="Rechercher..."
                         value={searchTerm}
@@ -70,8 +47,8 @@ const NavSearchmodif = () => {
                 </View>
 
                 <View style={styles.iconcontainer}>
-                    <Pressable style={styles.Icon} onPress={handleSearch}>
-                        <Ionicons name="search" size={30} color="#f94990" />
+                    <Pressable style={styles.Iconsearch} onPress={handleSearch}>
+                        <Ionicons name="search" size={25} color="#f94990" />
                     </Pressable>
                 </View>
             </View>
@@ -115,15 +92,23 @@ const styles = StyleSheet.create({
 
 
     },
-    Input: {
-        width: 330,
-        height: 40,
-        borderColor: "#555",
-        borderWidth: 1,
-        marginTop: 5,
-        padding: 10,
-        left: 10,
-        borderRadius: 20,
+    Iconsearch:{
+        left:5,
+    },
+    ContenuInput:{
+        width: '80%',
+        height: 25,
+    },
+    
+    Input: { 
+    width: '100%',
+    height: 25,
+    borderColor: "#555",
+    borderWidth: 1,
+    paddingLeft:10,
+    left: 10,
+    borderRadius: 20,
+         fontSize:10,
 
     },
     iconcontainer: {
@@ -137,7 +122,7 @@ const styles = StyleSheet.create({
     },
 
     IconBack: {
-        left: 10,
+        left: 5,
         marginTop: 5,
 
     },

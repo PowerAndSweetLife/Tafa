@@ -1,146 +1,188 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, Pressable, Button, ScrollView, ActivityIndicator, FlatList } from 'react-native';
-import React from 'react'
-import { useState, useEffect } from 'react';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, Image, Pressable, FlatList ,ScrollView} from 'react-native';
+import SkeletonItem from '../components/skeleton/skeletonContenuNoif';
 import { useNavigation } from '@react-navigation/native';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import { useUser } from './context/usercontext';
+import { BASE_URL } from "../helper/url";
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 const ContenuNotif = () => {
-
-    const [page, setPage] = useState(1);
-    const [isLoading, setIsLoading] = useState(true);
+    const navigation = useNavigation();
+    const [loading, setLoading] = useState(true);
+    const { userData } = useUser();
+    const Id = userData && userData.Id ? userData.Id : 'defaultUserId';
     const [notifications, setNotifications] = useState([]);
 
-    const fetchData = async () => {
-        try {
-            // Simulez une pause de 2 secondes (remplacez cela par votre logique de chargement réelle)
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Remplacez cette logique par votre moyen de récupérer les données depuis une source externe
-            const newNotifications = [
-                // ... Remplacez cela par vos données réelles
-                { id: 1, nom: 'lorem', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/nirymamy.jpg') },
-                { id: 2, nom: 'nDeba', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test4.jpg') },
-                { id: 3, nom: 'photograph', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test5.jpg') },
-                { id: 4, nom: 'miary', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test2.jpg') },
-                { id: 5, nom: 'Danny', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test3.jpg') },
-                { id: 6, nom: 'Test6', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test.jpg') },
-                { id: 7, nom: 'lorem', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/nirymamy.jpg') },
-                { id: 8, nom: 'nDeba', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test4.jpg') },
-                { id: 9, nom: 'photograph', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test5.jpg') },
-                { id: 10, nom: 'miary', message: 'a consulté votre profil, il sinterresse à vous ! Envoyer-lui un petit Coucou', imageSource: require('../assets/images/test2.jpg') },
-            ];
-
-            setNotifications(prevNotifications => [...prevNotifications, ...newNotifications]);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Erreur lors du chargement des données :', error);
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchData();
-    }, []);
 
-    const handleLoadMore = () => {
-        setPage(prevPage => prevPage + 1);
-        setIsLoading(true);
+        const fetchData = async () => {
+            try {
+                const db = getDatabase();
+                const visitesRef = ref(db, 'profiles_visits');
+
+                onValue(visitesRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        const notificationsData = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
+                        const currentUserVisites = notificationsData.filter((visite) => visite.visitedUserId === Id).map((visite) => {
+                            return {
+                                id: visite.id,
+                                nom: visite.visitorUserId,
+                                message: visite.Notifications,
+                                time: visite.timestamp,
+                                imageSource: { uri: BASE_URL + visite.img_link },
+                                isNew: true,
+                            };
+                        });
+
+                        setNotifications(currentUserVisites);
+                        setLoading(false);
+                    } else {
+                        console.log('Aucune donnée de visite trouvée.');
+                        setLoading(false);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading data:', error);
+                setLoading(false);
+            }
+        };
+
         fetchData();
+    }, [Id]);
+
+    const onPressProfil = () => {
+        navigation.navigate('Profil');
     };
 
-    const renderNotificationItem = ({ item }) => (
-        <View style={styles.Container}>
-            <View style={styles.NotifContainer}>
-                <View style={styles.NotifProfil}>
-                    <Image source={item.imageSource} style={styles.image} />
+    const renderNotificationItem = ({ item }) => {
+        const currentTime = Date.now();
+        const notificationTime = new Date(item.time).getTime();
+        const timeDiff = currentTime - notificationTime;
+        const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+        let hoursDiff = 0;
+        let daysDiff = 0;
+
+        if (minutesDiff > 60) {
+            hoursDiff = Math.floor(minutesDiff / 60);
+            if (hoursDiff > 24) {
+                daysDiff = Math.floor(hoursDiff / 24);
+            }
+        }
+
+        let timeDisplay = '';
+        if (daysDiff > 0) {
+            timeDisplay = `${daysDiff} jour${daysDiff > 1 ? 's' : ''}`;
+        } else if (hoursDiff > 0) {
+            timeDisplay = `${hoursDiff} heure${hoursDiff > 1 ? 's' : ''}`;
+        } else {
+            timeDisplay = `${minutesDiff} minute${minutesDiff > 1 ? 's' : ''}`;
+        }
+
+        return (
+            <Pressable onPress={onPressProfil}>
+                <View style={styles.Container}>
+                    <View style={[styles.NotifContainer, item.isNew && styles.NewNotifContainer]}>
+                        <View style={styles.NotifProfil}>
+                            <Image source={item.imageSource} style={styles.image} />
+                        </View>
+                        <View style={styles.NotifText}>
+                            <Text style={styles.Nom}>{item.nom}</Text>
+                            <Text style={styles.message} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
+                        </View>
+                        <View style={styles.Notiftime}>
+                            <Pressable style={styles.Icon} >
+                                <Ionicons name="close-circle" size={22} color="white" />
+                            </Pressable>
+                            <Text style={styles.time}> il y a {timeDisplay}</Text>
+                        </View>
+                    </View>
                 </View>
-                <View style={styles.NotifText}>
-                    <Text style={styles.Nom}>{item.nom}</Text>
-                    <Text style={styles.message}>{item.message}</Text>
-                </View>
-                <View style={styles.Info}>
-                    <Pressable onPress={() => changeText()}>
-                        <Ionicons name="question-mark" size={15} color="gray" />
-                    </Pressable>
-                </View>
-            </View>
-        </View>
-    );
+            </Pressable>
+        );
+    };
 
     return (
-        
-        <FlatList
-            data={notifications.slice(0, 7)}  // Afficher uniquement les 5 premières notifications
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderNotificationItem}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.1}
-            ListFooterComponent={() => (
-                isLoading && <ActivityIndicator size="large" color="#f94990" />
+        <ScrollView style={styles.scrollView}>
+        <View style={styles.container}>
+            {loading ? (
+                <View style={styles.skeletonContainer}>
+                    <View style={styles.contenu}>
+                        {[...Array(10)].map((_, index) => (
+                            <SkeletonItem key={index} />
+                        ))}
+                    </View>
+                </View>
+            ) : (
+                <View style={{ flex: 1 }}> {/* Ajout d'un style pour permettre le défilement */}
+                    <FlatList
+                        data={notifications}
+                        keyExtractor={item => item.id.toString()}
+                        renderItem={renderNotificationItem}
+                    />
+                </View>
             )}
-        />
-    );
+        </View>
+    </ScrollView>
+ );
 };
 
-
 const styles = StyleSheet.create({
-
     Container: {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        marginBottom: 5,
     },
     NotifContainer: {
         display: 'flex',
         flexDirection: 'row',
-        marginTop: 2,
-        width: '96%',
-        height: 100,
+        width: '100%',
+        height: 70,
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: 'lightgray',
-        borderRadius: 10,
-
+        paddingTop: 15,
     },
+    NewNotifContainer: {},
     NotifProfil: {
         marginLeft: 10,
         width: 70,
-        borderRadius: 50,
         height: 70,
-
     },
     image: {
-        width: 70,
+        width: 55,
+        height: 55,
         borderRadius: 50,
-        height: 70,
     },
     NotifText: {
-        width: '70%',
-        height: 90,
-        marginLeft: 5,
+        width: '58%',
+        height: 70,
         paddingTop: 10,
-
     },
-    Info: {
-        width: 20,
-        height: 20,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 50,
-        borderColor: 'gray',
-        borderWidth: 2,
-        marginTop: -50,
-
+    message: {
+        fontSize: 12,
+        top: 8,
+    },
+    Notiftime: {
+        alignItems: 'flex-end',
+        width: 80,
+        height: 70,
+        paddingTop: 10,
+    },
+    time: {
+        fontSize: 10,
+        top: 4,
     },
     Nom: {
-        fontSize: 20,
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: 'black',
     },
-})
+    Icon: {
+        top: -15,
+    },
+});
 
-
-export default ContenuNotif
-
+export default ContenuNotif;

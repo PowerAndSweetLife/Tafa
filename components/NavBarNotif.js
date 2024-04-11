@@ -14,68 +14,82 @@ const NavBarNotif = () => {
     navigation.navigate('Recherche');
   };
   const onPressBack = () => {
-    navigation.navigate('Accueil');
-};
+    navigation.goBack();
+  };
 
 
   return (
-
-
 
     <View style={styles.NavBar}>
       <View style={styles.imageContainer}>
       <Pressable style={styles.IconBack} onPress={onPressBack}>
           <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
         </Pressable>
+        <Text style={styles.Notification}>Notifications</Text>
 
       </View>
+      
       <View style={styles.iconcontainer}>
         <Pressable style={styles.Icon} onPress={onPressRecherche}>
-          <Ionicons name="search" size={25} color="#f94990" />
+          <Ionicons name="search" size={20} color="#f94990" />
         </Pressable>
 
       </View>
-      <StatusBar style="auto" />
+     
     </View>
+    
   )
 }
 
 
 const styles = StyleSheet.create({
-
+ 
 
   NavBar: {
-    
      marginTop:30,
     paddingBottom: 10,
     width: '100%',
     height: 50,
     display: 'flex',
     flexDirection: 'row',
-  
     justifyContent: 'space-between',
   },
   imageContainer: {
     width: 70,
-    height: 25,
-    marginTop: 13,
+    height: 50,
     marginLeft: 10,
+    display:'flex',
+    flexDirection:'row',
+    alignItems:'center',
+    width:300,
+
+  
+    
   },
   iconcontainer: {
+    height: 50,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingTop: 10,
+    alignItems:'center',
 
   },
   Icon: {
     marginRight: 10,
+    
   },
   IconBack: {
-    marginTop: -4,
+    
     marginRight: 10,
-  }
+    
+
+  },
+
+  Notification:{
+     fontSize:17,
+     fontWeight:'bold',
+  },
 
 
 })

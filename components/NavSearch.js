@@ -15,8 +15,8 @@ const NavSearch = () => {
 
     const navigation = useNavigation();
     const onPressBack = () => {
-        navigation.navigate('Accueil');
-    };
+        navigation.goBack();
+      };
 
 
     //dernier recherche(7jours)
@@ -50,36 +50,6 @@ const NavSearch = () => {
         setRecentSearches(updatedSearches);
     };
 
-
-
-
-
-
-
-
-
-
-    /*const [searchText, setSearchText] = useState('');
-        const [lastSearch, setLastSearch] = useState('');
-        const [searchResults, setSearchResults] = useState([]);
-    
-        const handleInputChange = (inputText) => {
-            setSearchText(inputText);
-        };
-       
-    
-        const handleSearch = () => {
-            setLastSearch(searchText);
-            // Autres actions de recherche...
-        };
-    
-        const renderSearchResult = ({ item }) => {
-            return (
-                <View style={styles.resultItem}>
-                    <Text>{item}</Text>
-                </View>
-            );
-        };*/
     const [searchTerm, setSearchTerm] = useState('');
 
 
@@ -107,32 +77,32 @@ const NavSearch = () => {
             <View style={styles.NavBar}>
                 <View style={styles.IconBack}>
                     <Pressable onPress={onPressBack}>
-                        <Ionicons name="ios-arrow-back" size={30} color="#f94990" />
+                        <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
                     </Pressable>
 
                 </View>
-                <View style={styles.Input}>
+                <View style={styles.ContenuInput}>
 
-                    <TextInput placeholder="Rechercher..."
+                    <TextInput placeholder="Rechercher..." style={styles.Input}
                         value={searchTerm}
                         onChangeText={(text) => setSearchTerm(text)} />
                 </View>
 
                 <View style={styles.iconcontainer}>
                     <Pressable  style={({ pressed }) => [
-                        styles.Icon,pressed ,]}
+                        styles.Iconsearch,pressed ,]}
                         onPress={handleSearch}
                         disabled={searchTerm.length === 0}
                     >
-                        <Ionicons name="search" size={30} color="#f94990" />
+                        <Ionicons name="search" size={25} color="#f94990" />
                     </Pressable>
                 </View>
             </View>
 
             <View style={styles.tout} >
                 <View style={styles.recentcont}>
-                    <Text style={{ fontSize: 15, fontWeight: 'bold' }}>Récent</Text>
-                    <Text style={{ fontSize: 15, fontWeight: 'bold', color: "blue", marginRight: 5 }}>Voir tout</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold' }}>Récent</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: "blue", marginRight: 5 }}>Voir tout</Text>
                 </View>
                 <View style={{ justifyContent: 'space-between', display: 'flex', flexDirection: 'row,', marginLeft: 10 }}>
                     <FlatList
@@ -141,9 +111,9 @@ const NavSearch = () => {
                         renderItem={({ item, index }) => (
                             <View>
                                 <View style={styles.REcentbox}>
-                                    <Text>{item.term}</Text>
+                                    <Text  style={{fontSize:10,}}>{item.term}</Text>
                                     <Pressable style={styles.IconSuppr} onPress={() => handleDeleteSearch(index)}>
-                                        <Ionicons name="close" size={25} />
+                                        <Ionicons name="close" size={15} />
                                     </Pressable>
                                 </View>
 
@@ -189,16 +159,26 @@ const styles = StyleSheet.create({
 
 
     },
+    ContenuInput:{
+        width: '80%',
+        height: 25,
+
+    },
     Input: {
-        width: 330,
-        height: 40,
-        borderColor: "#555",
+        width: '100%',
+        height: 25,
+       // borderColor: "#555",
         borderWidth: 1,
-        marginTop: 5,
-        padding: 10,
+        //marginTop: 5,
+        //padding: 10,
         left: 10,
         borderRadius: 20,
-
+             fontSize:10,
+             paddingLeft:10,
+             
+    },
+    Iconsearch:{
+        left:4,
     },
     iconcontainer: {
         display: 'flex',
@@ -211,7 +191,7 @@ const styles = StyleSheet.create({
     },
 
     IconBack: {
-        left: 10,
+       left: 5,
         marginTop: 5,
 
     },
@@ -248,7 +228,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
     }
-
+    
 
 
 })

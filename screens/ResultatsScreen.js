@@ -1,6 +1,12 @@
 import React from 'react';
 import { StyleSheet, View, Text, SafeAreaView, FlatList, Image, ScrollView,item } from 'react-native';
 import NavSearchmodif from '../components/NavSearchmodif';
+import { BASE_URL } from "../helper/url";
+import { useState, useEffect } from 'react';
+
+
+
+
 
 const ResultatsScreen = ({ route }) => {
 
@@ -8,32 +14,40 @@ const ResultatsScreen = ({ route }) => {
   // Effectuez la recherche et affichez les résultats
 
   const { searchTerm } = route.params;
-  const allItems = [
-    { id: 1, name: 'nirymamy', imageSource: require('../assets/images/nirymamy.jpg') },
-    { id: 2, name: 'nDeba', imageSource: require('../assets/images/test4.jpg') },
-    { id: 3, name: 'photograph', imageSource: require('../assets/images/test5.jpg') },
-    { id: 4, name: 'miary', imageSource: require('../assets/images/test2.jpg') },
-    { id: 5, name: 'danny', imageSource: require('../assets/images/test3.jpg') },
-    { id: 6, name: 'Test6', imageSource: require('../assets/images/test.jpg') }
+  const [donnees, setDonnees] = useState([]);
+  const [loading, setLoading] = useState(true); // Déclaration de la variable loading
 
-    // ... Ajoutez d'autres éléments au besoin
-  ];
-  const filteredResults = allItems.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetch(BASE_URL + 'users')
+      .then(response => response.json())
+      .then(data => {
+        setDonnees(data);
+        // Mettre à jour loading après un court délai pour afficher le skeleton
+        setTimeout(() => setLoading(false), 5000);
+      })
+      .catch(error => {
+        console.error('Erreur lors de la récupération des données:', error);
+        setLoading(false); // Mettre à jour loading en cas d'erreur
+      });
+  }, []);
+
+ const filteredResults = donnees.filter(item =>
+    item.Nom.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const calculateProximity = (text, searchTerm) => {
+  const calculateProximity = (text = '', searchTerm = '') => {
     const commonChars = text
       .toLowerCase()
       .split('')
       .filter(char => searchTerm.toLowerCase().includes(char)).length;
-
+  
     return commonChars;
   };
+  
 
   // Tri des résultats en fonction de la proximité avec le terme de recherche
-  const sortedResults = allItems.sort((a, b) => {
-    const proximityA = calculateProximity(a.name, searchTerm);
-    const proximityB = calculateProximity(b.name, searchTerm);
+  const sortedResults = donnees.sort((a, b) => {
+    const proximityA = calculateProximity(a.Nom, searchTerm);
+    const proximityB = calculateProximity(b.Nom, searchTerm);
 
     return proximityB - proximityA;
   });
@@ -43,21 +57,22 @@ const ResultatsScreen = ({ route }) => {
 
 
 
-
   const elementsJSX = [];
 
   // Boucle for pour générer les éléments JSX
-  for (let i = 0; i < allItems.length; i++) {
-    const item = allItems[i];
+  for (let i = 0; i < donnees.length; i++) {
+    const item = donnees[i];
     elementsJSX.push(
       <View key={item.id} style={styles.Imagcontainer}>
 
         <View>
-          <Image source={item.imageSource} style={styles.image} />
+        <Image  source={{
+              uri: BASE_URL+item.img_link
+            }} style={styles.image} />
         </View>
         <View style={styles.NomEtStatut}>
           <View>
-            <Text style={styles.Nom}>{item.name}</Text>
+            <Text style={styles.Nom}>{item.Nom}</Text>
           </View>
           <View style={styles.statutContainer}>
             {item.enLigne ? (
@@ -109,37 +124,39 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
+   
     paddingTop: -3,
     display: 'flex',
     flex: 1,
+    alignItems: 'center',
     flexWrap: 'wrap',
-    backgroundColor:'white',
   },
-  scrollView: {
-    marginHorizontal: 20,
-    marginLeft: 3,
-    marginRight: 10,
-  },
+
   contenu: {
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    //  justifyContent:'space-evenly',
     paddingTop: 15,
-    
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+   
   },
   Imagcontainer: {
-    width: 120,
+    width: '30.4%', // Adjust this value based on the number of items you want in a row
+    minWidth: '30%',
     height: 145,
     borderRadius: 7,
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: 10
+    marginBottom: 10,
+    justifyContent: 'flex-start',
+    marginLeft: '2.5%',
   },
 
   image: {
-    width: 120,
+    width: '100%',
     height: 120,
     borderRadius: 7,
   },
@@ -150,8 +167,7 @@ const styles = StyleSheet.create({
 
   },
   Nom: {
-    fontSize: 18,
-
+    fontSize: 12,
     color: 'black',
   },
 
@@ -175,7 +191,7 @@ const styles = StyleSheet.create({
   NOresult:{
     textAlign:'center',
     color:'red',
-    fontSize:25,
+    fontSize:15,
     marginTop:100,
     
   }
