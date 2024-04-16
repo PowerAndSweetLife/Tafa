@@ -1,15 +1,21 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ToastAndroid, Pressable, Modal, } from "react-native";
+import { View, Text, StyleSheet, ToastAndroid, Pressable, Modal, TouchableHighlight } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
 import SkeletonItem from '../../components/skeleton/skeletonFooter';
 import { useEffect, useRef } from 'react';
+import { useTheme } from '../context/usercontexttheme';
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { useRoute } from '@react-navigation/native';
+
 
 
 
 function Footer() {
-  // custom toast
+  const route = useRoute();
+  const userData = route.params.userData;
+  const { isDarkMode } = useTheme();
   const showCustomToast = () => {
     // console.log("Function showCustomToast called");
     Toast.show({
@@ -29,10 +35,7 @@ function Footer() {
   const onPressBloquer = () => {
     navigation.navigate("bloquer");
   };
-  const onPressAnnuler = () => {
-    navigation.navigate("contenu");
-  };
-  
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const openModal = () => {
@@ -67,25 +70,17 @@ function Footer() {
   return (
 
     <View>
-      <View style={style.Contenair}>
-
-        <View style={style.Pressable}>
-          <Pressable onPress={onPressAnnuler} style={style.PressableENtier}>
-            <Text >Annuler le Match</Text>
-          </Pressable>
+      <View style={[style.Contenair, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
+        <View style={[style.Pressable, { backgroundColor: isDarkMode ? '#79328d' : 'lightgrey' }]}>
+          <TouchableOpacity onPress={openModal} style={style.PressableENtier}>
+            <Text style={[style.TExt, { color: isDarkMode ? 'white' : '#000000' }]} >Bloquer {userData.Nom} ?</Text>
+          </TouchableOpacity>
         </View>
 
-
-        <View style={style.Pressable}>
-          <Pressable onPress={openModal} style={style.PressableENtier}>
-            <Text >Bloquer Bella3</Text>
-          </Pressable>
-        </View>
-
-        <View style={style.Pressable}>
-          <Pressable onPress={onPressBloquer} style={style.PressableENtier}>
-            <Text style={{ color: 'red' }}>Signaler Bella3</Text>
-          </Pressable>
+        <View style={[style.Pressable, { backgroundColor: isDarkMode ? '#79328d' : 'lightgrey' }]}>
+          <TouchableOpacity onPress={onPressBloquer} style={style.PressableENtier}>
+            <Text style={{ color: 'red' }}>Signaler {userData.Nom} ?</Text>
+          </TouchableOpacity>
         </View>
 
 
@@ -106,12 +101,12 @@ function Footer() {
 
 
             <Pressable onPress={closeModal}>
-              <Ionicons  style={style.CLosePressable} name="close" size={25} color="red"></Ionicons>
+              <Ionicons style={style.CLosePressable} name="close" size={25} color="red"></Ionicons>
             </Pressable>
 
-                
+
             <View style={style.textModal}>
-              <Text>Bloquer , Bella3 ?</Text>
+              <Text>Bloquer , {userData.Nom} ?</Text>
               <Text>Est ce que vous étes sur ?</Text>
             </View>
 
@@ -120,7 +115,7 @@ function Footer() {
             </Pressable>
 
             <Pressable style={style.modalPressable1}>
-              <Text style={style.TExt}>Retour</Text>
+              <Text style={style.TExt}>non , Retour</Text>
             </Pressable>
 
           </View>
@@ -137,26 +132,20 @@ const style = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     //justifyContent: 'space-around',
-    height: 150,
-    backgroundColor: 'white'
+    height: 100,
+    backgroundColor: 'white',
   },
   Pressable: {
     backgroundColor: 'lightgrey',
     width: '92%',
     display: 'flex',
     alignItems: 'center',
-   // paddingBottom: 20,
+    // paddingBottom: 20,
     paddingTop: 5,
-    borderRadius: 11,
-    height:30,
-    marginBottom:10,
-
-  },
-  PressableENtier: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-
+    borderRadius: 15,
+    height: 40,
+    marginBottom: 15,
+    justifyContent:'center'
   },
   modalContainer: {
     display: 'flex',
@@ -183,8 +172,8 @@ const style = StyleSheet.create({
     marginLeft: -160,
     top: -30,
   },
-  TExt:{
-    color: "white", 
+  TExt: {
+    color: "white",
     fontSize: 15,
   },
   signalerView: {
