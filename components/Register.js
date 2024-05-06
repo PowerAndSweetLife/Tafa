@@ -6,12 +6,25 @@ import { BASE_URL } from "../helper/url";
 import { TouchableOpacity, View, StyleSheet, Text, Image } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { SelectList } from 'react-native-dropdown-select-list'
-
+import * as Font from 'expo-font'
+import loadFonts from './loadFonts';
 
 
 
 
 function Register() {
+
+  useEffect(() => {
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        'modal-font': require('../assets/Fonts/Montserrat-Bold.ttf'),
+        'custom-fontmessage': require('../assets/Fonts/Montserrat-Regular.ttf'),
+      });
+      setIsFontLoaded(true); // Mettre à jour l'état pour indiquer que la police est chargée
+    };
+    loadFonts();
+  }, []);
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isCofirmationVisible, setIsConfirmationVisible] = useState(false);
   const navigation = useNavigation();
@@ -41,8 +54,7 @@ function Register() {
   const [inputValueAnnee, setInputValueAnnee] = useState('');
   const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
+  const [inputValue10, setInputValue10] = useState('');
 
 
   const handleEnregistrement = async () => {
@@ -58,7 +70,8 @@ function Register() {
       !inputValueMois ||
       !inputValueAnnee ||
       !inputValue8 ||
-      !inputValue9
+      !inputValue9 ||
+      !inputValue10
     ) {
       setErrorMessage("Veuillez remplir tous les champs.");
       return; // Sortir de la fonction si un champ est vide
@@ -92,6 +105,7 @@ function Register() {
             Nom: inputValue1,
             Prenom: inputValue2,
             Pseudo: inputValue3,
+            Ville: inputValue10,
             Email: inputValue4,
             Sexe: inputValue5,
             Situation: inputValue6,
@@ -108,17 +122,13 @@ function Register() {
         } else {
           // Réinitialiser l'erreur lorsque les mots de passe correspondent
           setErrorMessage('');
-          setSuccessMessage('Enregistrement réussi !');
-          // Naviguer vers l'accueil après un court délai (par exemple, 2 secondes)
-          setTimeout(() => {
-            navigation.navigate('COnnexion');
-          }, 2500);
+          // Naviguer vers l'accueil
+          navigation.navigate('COnnexion');
         }
       }
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error);
     }
-
   };
 
 
@@ -130,6 +140,9 @@ function Register() {
     { key: '2', value: 'Femme' },
 
   ];
+
+
+
 
   const Situation = [
     { key: '1', value: 'Célibataire' },
@@ -201,12 +214,12 @@ function Register() {
           </View>
 
           <View style={{ margin: 10, top: 5 }}>
-            <Text style={style.textRegister}>Inscription</Text>
+            <Text  style={[style.textRegister,{ fontFamily: isFontLoaded ? 'modal-font' : null }]}>Inscription</Text>
           </View>
 
           <View style={{ top: 10 }}>
             <View style={style.boxBody}>
-              <Text style={style.text}>Nom :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Nom :</Text>
               <TextInput
                 placeholder="Nom "
                 style={style.TextInput}
@@ -217,7 +230,7 @@ function Register() {
 
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Prénom(s) :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Prénom(s) :</Text>
               <TextInput
                 placeholder="Prenom "
                 style={style.TextInput}
@@ -228,7 +241,7 @@ function Register() {
 
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Pseudo :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Pseudo :</Text>
               <TextInput
                 placeholder="Pseudo... "
                 style={[
@@ -242,7 +255,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Email :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Email :</Text>
               <TextInput
                 placeholder="email... "
                 style={[
@@ -256,10 +269,18 @@ function Register() {
               {errorMessageemail ? <Text style={style.error}>{errorMessageemail}</Text> : null}
             </View>
 
-
+            <View style={style.boxBody}>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Ville :</Text>
+              <TextInput
+                placeholder="Ville "
+                style={style.TextInput}
+                onChangeText={(text) => setInputValue10(text)}
+                value={inputValue10}
+              />
+            </View>
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Sexe :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Sexe :</Text>
               <View style={style.InputSexe}>
                 <View style={style.datePickerItemSexe}>
                   <SelectList
@@ -281,7 +302,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Situation :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Situation :</Text>
               <View style={style.InputSituation}>
                 <View style={style.datePickerItemSituation}>
                   <SelectList
@@ -305,7 +326,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Date de naissance :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Date de naissance :</Text>
               <View style={style.ContenuDate}>
 
 
@@ -363,7 +384,7 @@ function Register() {
 
 
             <View style={style.boxBody}>
-              <Text style={style.text}>Mot de passe :</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Mot de passe :</Text>
               <View style={style.showpassword}>
                 <TextInput
                   placeholder="mot de passe... "
@@ -384,7 +405,7 @@ function Register() {
 
             <View style={style.boxBody}>
 
-              <Text style={style.text}>Confirmation:</Text>
+              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Confirmation:</Text>
               <View style={style.showpassword}>
                 <TextInput
                   placeholder="Confirmation... "
@@ -406,8 +427,6 @@ function Register() {
 
               </View>
               {errorMessage ? <Text style={style.error}>{errorMessage}</Text> : null}
-              {successMessage ? <Text style={style.successMessage}>{successMessage}</Text> : null}
-
 
             </View>
           </View>
@@ -435,7 +454,6 @@ function Register() {
 
 const style = StyleSheet.create({
   BoxContainer: {
-    marginTop: 70,
     height: 1000,
     backgroundColor: "white",
     borderColor: "black",
@@ -477,8 +495,9 @@ const style = StyleSheet.create({
     top: 20,
     fontStyle: "normal",
     fontSize: 20,
-    textDecorationLine: "underline",
+   // textDecorationLine: "underline",
     color: "#1c1c1e",
+    
   },
   showpassword: {
     height: 40,
@@ -528,6 +547,10 @@ const style = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    flexDirection: 'row',
+
+
+
   },
   InputDate: {
     height: 40,
@@ -580,9 +603,6 @@ const style = StyleSheet.create({
   },
   error: {
     color: 'red',
-  },
-  successMessage:{
-    color:'blue'
   },
 
   InputSexe: {

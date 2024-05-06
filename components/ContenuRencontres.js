@@ -1,4 +1,4 @@
-import { TouchableOpacity, StyleSheet, Text, View, Image, Pressable, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, StyleSheet, Text, View, Image, Pressable, Animated, Modal, ScrollView } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { BASE_URL } from "../helper/url";
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -9,93 +9,71 @@ import SkeletonItem from '../components/skeleton/skeletonRencontre';
 import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
 import { useUser } from './context/usercontext';
-import 'firebase/database';
 import firebase from 'firebase/app';
-import { getDatabase, ref, push, set } from 'firebase/database';
+import { getDatabase, ref, push, set, get } from 'firebase/database';
+import FloatingHearts from '../components/FloatingHearts';
+import { useTheme } from './context/usercontexttheme';
+import * as Font from 'expo-font';
+import loadFonts from './loadFonts';
+import { BackHandler } from 'react-native';
+
 
 
 
 
 const calculateAge = (dateOfBirth) => {
     const today = new Date();
-    const yearOfBirth = parseInt(dateOfBirth.split('/')[2]); // Récupérer l'année de naissance et la convertir en nombre entier
+    const yearOfBirth = parseInt(dateOfBirth.split('/')[2]);
     const age = today.getFullYear() - yearOfBirth;
     return age;
 };
-;
 
 const defaultAvatar = (sexe) => {
     return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
 };
 
-
 const ContenuRencontres = () => {
+
+    useEffect(() => {
+        loadFonts();
+    }, []);
+
     const { Monprofil } = useUser();
     const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
     const navigation = useNavigation();
+    const { isDarkMode } = useTheme();
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    
-    const onPressProfil = () => {
-        navigation.navigate('Profil');
-    };
+    const [showMatchModal, setShowMatchModal] = useState(false);
+    const [nom, setLikedUserName] = useState('');
+    const shimmerAnimation = useRef(new Animated.Value(0)).current;
+    const [showFloatingHearts, setShowFloatingHearts] = useState(true);
+    const [blockedUsers, setBlockedUsers] = useState([]);
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(shimmerAnimation, {
+                toValue: 1,
+                duration: 4000,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, []);
 
+    const handleBackPress = () => {
+        navigation.goBack(); // Revenir à l'écran précédent
+        return true; // Indiquer que l'événement a été géré
+    };
 
     useEffect(() => {
-        setLoading(true); // Définir le chargement comme actif avant de récupérer les données
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 
-        // Calculer l'index de début et de fin pour la pagination
-        const startIndex = (page - 1) * 10;
-        const endIndex = page * 10;
+        return () => {
+            backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+        };
+    }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
 
-        fetch(`${BASE_URL}users?_start=${startIndex}&_end=${endIndex}`)
-            .then(response => response.json())
-            .then(data => {
-                // Filtrer les données pour ne pas inclure l'utilisateur connecté et ceux qui n'ont pas de img_link
-                const filteredData = data.filter(user => user.Id !== Id && user.img_link);
-                const filteredByGender = filteredData.filter(user => {
-                    if (Monprofil.Sexe === 'Homme') {
-                        return user.Sexe === 'Femme';
-                    } else if (Monprofil.Sexe === 'Femme') {
-                        return user.Sexe === 'Homme';
-                    }
-                });
-                const formattedData = filteredData.map(user => ({
-                    nom: user.Nom,
-                    age: calculateAge(user.Date_de_naissance),
-                    Situation: user.Situation,
-                    Images: user.img_link,
-                    Sexe: user.Sexe,
-                    Id: user.Id
-                }));
-                // Mettre à jour les cartes existantes avec les nouvelles données paginées
-                setCards(prevCards => [...prevCards, ...formattedData]);
-                setLoading(false); // Marquer le chargement comme terminé
-                console.log('Données récupérées avec succès :', data);
-            })
-            .catch(error => {
-                console.error('Erreur lors de la récupération des données:', error);
-                setLoading(false); // Marquer le chargement comme terminé en cas d'erreur
-            });
-    }, [page]); // Rafraîchir les données chaque fois que la page change
 
-    // Fonction pour charger plus de membres lors du défilement
-    const loadMoreMembers = () => {
-        setPage(prevPage => prevPage + 1); // Augmenter le numéro de page pour récupérer les membres suivants
-    };
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCql_o_TZT7-bbBYY9PTa_ee8VfdaMQo4g",
-        authDomain: "tafa1-2a9e0.firebaseapp.com",
-        databaseURL: "https://tafa1-2a9e0-default-rtdb.firebaseio.com",
-        projectId: "tafa1-2a9e0",
-        storageBucket: "tafa1-2a9e0.appspot.com",
-        messagingSenderId: "444808821936",
-        appId: "1:444808821936:web:243a5339773f19185dcf75",
-        measurementId: "G-GZEMBD98F4"
-    };
-    //const app = initializeApp(firebaseConfig);
     const database = getDatabase();
 
     const swipeLeft = () => {
@@ -105,7 +83,26 @@ const ContenuRencontres = () => {
     const swipeRight = () => {
         swiperRef.swipeRight();
     };
-    const insererDonnees = (likerId, likedUserId,likedUser) => {
+
+    const insererDislike = (dilikerId, dislikedUserId, dislikedUser) => {
+        try {
+            const newDataRef = push(ref(database, 'dislikes'));
+            set(newDataRef, {
+                dislikerId: dilikerId,
+                dislikedUserId: dislikedUserId,
+                dislikedUserProfile: dislikedUser
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'insertion des données:', error);
+        }
+    };
+    const onSwipedLeft = (index) => {
+        const swipedUser = cards[index];
+        console.log('Swiped left:', swipedUser);
+        insererDislike(Id, swipedUser.Id, swipedUser);
+    };
+
+    const insererDonnees = (likerId, likedUserId, likedUser) => {
         try {
             const newDataRef = push(ref(database, 'likes'));
             set(newDataRef, {
@@ -114,20 +111,140 @@ const ContenuRencontres = () => {
                 likedUserProfile: likedUser
             });
         } catch (error) {
-            console.error('Erreur lors de l\'insertion des données:', error);
+            console.error('Erreur lors de l\'insertion des données liké:', error);
         }
     };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const blockedUsersResponse = await fetch(BASE_URL + 'usersBlocked');
+                if (!blockedUsersResponse.ok) {
+                    throw new Error('Erreur lors de la récupération des utilisateurs bloqués');
+                }
+                const blockedUsersData = await blockedUsersResponse.json();
+                setBlockedUsers(blockedUsersData);
+                console.log('Blocked Users:', blockedUsersData); // Vérifier les utilisateurs bloqués
+
+                const usersResponse = await fetch(BASE_URL + 'users');
+                if (!usersResponse.ok) {
+                    throw new Error('Erreur lors de la récupération des utilisateurs');
+                }
+                const usersData = await usersResponse.json();
+
+                // Récupérer les données de la table "dislikes" depuis Firebase
+                const dislikesSnapshot = await get(ref(database, 'dislikes'));
+                const dislikesData = Object.values(dislikesSnapshot.val() || {});
+
+                // Récupérer les données de la table "likes" depuis Firebase
+                const likesSnapshot = await get(ref(database, 'likes'));
+                const likesData = Object.values(likesSnapshot.val() || {});
+
+                // Filtrer les données pour ne pas inclure l'utilisateur connecté et ceux qui n'ont pas de img_link
+                const filteredData = usersData.filter(user => user.Id !== Id && user.img_link);
+
+                // Filtrer les utilisateurs bloqués
+                const finalData = filteredData.filter(user => {
+                    const hasBlockedCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocking_user_id === Id && blockedUser.blocked_user_id === user.Id);
+                    const isBlockedByCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocked_user_id === Id && blockedUser.blocking_user_id === user.Id);
+                    return !hasBlockedCurrentUser && !isBlockedByCurrentUser;
+                });
+                console.log('Filtered Data:', finalData); // Vérifier les données filtrées
+
+                // Filtrer les utilisateurs présents dans la table "dislikes"
+                const formattedData = finalData.filter(user => {
+                    // Vérifier si l'utilisateur est présent dans la table "dislikes"
+                    return !dislikesData.some(dislike => dislike.dislikedUserId === user.Id);
+                });
+                console.log('Filtered Data:', formattedData); // Vérifier les données filtrées
+
+                const doneData = formattedData.filter(user => {
+                    // Vérifier si l'utilisateur est présent dans la table "likes"
+                    return !dislikesData.some(like => like.likedUserId === user.Id);
+                });
+                console.log('Filtered Data:', doneData); // Vérifier les données filtrées
+
+                const formattedUserData = doneData.map(user => ({
+                    nom: user.Nom,
+                    age: calculateAge(user.Date_de_naissance),
+                    Situation: user.Situation,
+                    Images: user.img_link,
+                    Sexe: user.Sexe,
+                    Id: user.Id
+                }));
+
+                // Mettre à jour les cartes existantes avec les nouvelles données paginées
+                setCards(prevCards => [...prevCards, ...formattedUserData]);
+                setLoading(false); // Marquer le chargement comme terminé
+                console.log('Données récupérées avec succès :', usersData);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données:', error);
+                setLoading(false); // Marquer le chargement comme terminé en cas d'erreur
+            }
+        };
+
+        fetchData();
+    }, [page, Id]); // Rafraîchir les données chaque fois que la page change ou lorsque les utilisateurs bloqués sont mis à jour
+
+
+    const checkMatches = async (userId, likedUserId) => {
+        const likesRef = ref(database, 'likes');
+
+        try {
+            const snapshot = await get(likesRef);
+            if (snapshot.exists()) {
+                const likes = snapshot.val();
+
+                // Vérifiez si l'utilisateur et l'utilisateur aimé ont des likes mutuels
+                const currentUserLike = Object.values(likes).find(like =>
+                    like.likerId === userId && like.likedUserId === likedUserId
+                );
+
+                const likedUserLike = Object.values(likes).find(like =>
+                    like.likerId === likedUserId && like.likedUserId === userId
+                );
+
+                if (currentUserLike && likedUserLike) {
+                    const likedUser = cards.find(user => user.Id === likedUserId);
+                    if (likedUser) {
+                        setShowMatchModal(true);
+                        setLikedUserName(likedUser.nom); // Utiliser le nom de l'utilisateur aimé
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors de la vérification des correspondances:', error);
+        }
+    };
+
     const onSwipedRight = (index) => {
         const swipedUser = cards[index];
         console.log('Swiped right:', swipedUser);
-        insererDonnees(Id, swipedUser.Id,swipedUser);
+        insererDonnees(Id, swipedUser.Id, swipedUser);
+        checkMatches(Id, swipedUser.Id);
     };
 
+    const closeModal = () => {
+        setShowMatchModal(false);
+        setShowFloatingHearts(false);
+    };
+    const backgroundColor = shimmerAnimation.interpolate({
+        inputRange: [0, 0.3, 0.5, 1],
+        outputRange: ['#79328d', '#f94990', '#79328d', '#f94990'],
+    });
+
+
+    const onPressProfil = (userData) => {
+
+
+        navigation.navigate('Profil', { userData: userData });
+        console.log('Profil', userData);
+    };
 
 
 
     return (
-        <View style={styles.Container}>
+        <View style={[styles.Container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
             {loading ? (
                 <View style={styles.skeletonContainer}>
                     {[...Array(1)].map((_, index) => (
@@ -155,26 +272,26 @@ const ContenuRencontres = () => {
                                     <View style={styles.Text}>
                                         <View style={styles.NomEtInfoContenu}>
                                             <View style={styles.NomEtInfoContenu}>
-                                                <Text style={styles.NOM}>{card.nom}, {card.age} ans</Text>
+                                                <Text style={[styles.NOM, { fontFamily: 'nomrencotre-font', color: isDarkMode ? '#ffffff' : '#ffffff' }]}>{card.nom}, {card.age} ans</Text>
                                             </View>
                                             <View style={styles.INFO}>
-                                                <Pressable style={styles.Icon} onPress={swipeRight}>
+                                                <Pressable style={styles.Icon} onPress={() => onPressProfil(card)}>
                                                     <Ionicons name="information-circle" size={25} color="white" />
                                                 </Pressable>
                                             </View>
                                         </View>
-                                        <Text style={styles.Situation}>{card.Situation}</Text>
+                                        <Text style={[styles.Situation, { fontFamily: 'custom-font' }]}>{card.Situation}</Text>
                                     </View>
                                 </LinearGradient>
                                 <View style={styles.Pressable}>
                                     <View style={styles.Circle}>
                                         <TouchableOpacity style={styles.Icon} onPress={swipeLeft}>
-                                            <Ionicons name="close" size={50} color="black" />
+                                            <Ionicons name="close" size={50} color={isDarkMode ? '#79328d' : 'black'} />
                                         </TouchableOpacity>
                                     </View>
                                     <View style={styles.Circle1}>
                                         <TouchableOpacity style={styles.Icon} onPress={swipeRight}>
-                                            <Ionicons name="heart" size={50} />
+                                            <Ionicons name="heart" size={50} color={isDarkMode ? '#79328d' : 'black'} />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -187,18 +304,50 @@ const ContenuRencontres = () => {
                             </View>
                         );
                     }}
-                    // onSwipedLeft={(index) => onSwipedLeft(index)} // Passez l'index à la fonction onSwipedLeft
+                    onSwipedLeft={onSwipedLeft}
                     onSwipedRight={onSwipedRight}
                     onSwiped={(cardIndex) => console.log('Card swiped:', cardIndex)}
                     onSwipedAll={() => console.log('All cards have been swiped')}
                     cardIndex={0}
-                    backgroundColor="white"
+                    backgroundColor={isDarkMode ? '#000000' : '#ffffff'}
                     stackSize={2}
                     verticalSwipeEnabled={false}
                     verticalSwipe={false}
                 />
             )}
 
+            <Modal
+                animationIn="fadeIn"
+                animationOut="fadeOut"
+                animationType="slide"
+                transparent={true}
+                visible={showMatchModal}
+                onRequestClose={closeModal}
+                backdropOpacity={0}
+            >
+
+                <Animated.View
+                    style={[
+                        styles.modalContent,
+                        { backgroundColor },
+                    ]}
+                >
+
+                    <View style={styles.contenuerreurText}>
+
+                        <Text style={styles.modalText1}>Félicitations !</Text>
+                        <Text style={styles.modalText2}> Vous êtes matché avec{nom} </Text>
+                        <Pressable onPress={onPressProfil} style={styles.modaleProfile} >
+                            <Text style={styles.modalText3}>Voir Profil de {nom} </Text>
+                        </Pressable>
+                        <Pressable onPress={closeModal} style={styles.modaleProfile1} >
+                            <Text style={styles.modalText4}>Igniorer</Text>
+                        </Pressable>
+                    </View>
+
+                </Animated.View>
+            </Modal>
+            {showMatchModal && <FloatingHearts />}
         </View>
     );
 };
@@ -295,8 +444,103 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'white',
         marginLeft: 5,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+        zIndex: 5,
+    },
+    modalText: {
+        fontSize: 18,
+        marginBottom: 10,
+    },
+    closeButton: {
+        fontSize: 16,
+        color: 'blue',
+        textDecorationLine: 'underline',
+    },
+    modalText1: {
+        zIndex: 3,
+        color: 'white',
+        marginLeft: 20,
+        fontSize: 20,
 
-    }
+    },
+    modalText2: {
+        zIndex: 3,
+        color: 'white',
+        marginLeft: 20,
+        fontSize: 15,
+        marginBottom: 10,
+    },
+    modalText3: {
+        zIndex: 3,
+        color: 'white',
+        textAlign: 'center',
+
+        fontSize: 15,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    modalText4: {
+        zIndex: 3,
+        color: 'black',
+        textAlign: 'center',
+
+        fontSize: 15,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    closemodale: {
+        position: 'absolute',
+        alignSelf: 'flex-end',
+        right: -35,
+        top: -17
+
+    },
+    contenuerreurText: {
+        width: 300,
+        textAlign: 'center',
+        top: 10,
+    },
+    modalContent: {
+        display: 'flex',
+        width: 370,
+        borderRadius: 20,
+        backgroundColor: 'red',
+        height: 200,
+        display: 'flex',
+        alignItems: 'center',
+        //  justifyContent: 'center',
+        top: 300,
+        left: 20,
+        zIndex: 1,
+        textAlign: 'center',
+    },
+    modaleProfile: {
+        backgroundColor: '#07668f',
+        marginTop: 10,
+        width: 300,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+    },
+    modaleProfile1: {
+        backgroundColor: 'white',
+        marginTop: 10,
+        width: 300,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+    },
 });
 
-export default ContenuRencontres
+export default ContenuRencontres;

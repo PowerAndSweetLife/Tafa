@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, push, set } from 'firebase/database';
-
+import { getDatabase, ref, push, set,serverTimestamp  } from 'firebase/database';
 
 // Votre configuration Firebase
 const firebaseConfig = {
@@ -15,10 +14,9 @@ const firebaseConfig = {
 };
 
 // Initialiser Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+const database = getDatabase();
 
-const insererDonnees = (Id, Idvisited, inputValue,profilVisited,Nom) => {
+const insererDonnees = (Idenvoyermes, Idrecusmes ,inputValue ,profilrecumes,Nomrecusmes,Nomenvoyermes,profilenvoyermes) => {
     try {
       // Vérifier que les données ne contiennent pas de fonctions
       if (typeof Id === 'function' || typeof Idvisited === 'function' || typeof inputValue === 'function') {
@@ -27,11 +25,14 @@ const insererDonnees = (Id, Idvisited, inputValue,profilVisited,Nom) => {
   
       const newDataRef = push(ref(database, 'Messages')); // Remplacez 'votre_noeud' par le nom du nœud où vous voulez insérer les données
       set(newDataRef, {
-        Id: Id,
-        Nom: Nom,
-        Idvisited: Idvisited,
-        img_link: profilVisited,
-        inputValue: inputValue
+        Idenvoyermes: Idenvoyermes,
+        Nomenvoyermes:Nomenvoyermes,
+        profilenvoyermes:profilenvoyermes,
+        Nomrecusmes: Nomrecusmes,
+        Idrecusmes: Idrecusmes,
+        profilrecumes: profilrecumes,
+        inputValue: inputValue,
+        timestamp: new Date().toISOString()
       });
       console.log("Données insérées avec succès");
     } catch (error) {
@@ -41,3 +42,29 @@ const insererDonnees = (Id, Idvisited, inputValue,profilVisited,Nom) => {
   
 
 export { insererDonnees };
+const insererimages = (Idenvoyermes, Idrecusmes ,imageName ,profilrecumes,Nomrecusmes,Nomenvoyermes,profilenvoyermes) => {
+  try {
+    // Vérifier que les données ne contiennent pas de fonctions
+    if (typeof Id === 'function' || typeof Idvisited === 'function' || typeof inputValue === 'function') {
+      throw new Error("Les données ne peuvent pas contenir de fonctions");
+    }
+
+    const newDataRef = push(ref(database, 'Messages')); // Remplacez 'votre_noeud' par le nom du nœud où vous voulez insérer les données
+    set(newDataRef, {
+      Idenvoyermes: Idenvoyermes,
+      Nomenvoyermes:Nomenvoyermes,
+      profilenvoyermes:profilenvoyermes,
+      Nomrecusmes: Nomrecusmes,
+      Idrecusmes: Idrecusmes,
+      profilrecumes: profilrecumes,
+      Images: 'assets/Images/Users/'+imageName,
+      timestamp: new Date().toISOString()
+    });
+    console.log("Données insérées avec succès");
+  } catch (error) {
+    console.error("Erreur lors de l'insertion des données :", error);
+  }
+};
+
+
+export { insererimages };

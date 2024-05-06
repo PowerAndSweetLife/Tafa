@@ -1,13 +1,13 @@
 import React from 'react';
 import { View,Animated, StyleSheet } from 'react-native';
 import { useEffect, useRef } from 'react';
-
+import { useTheme } from '../context/usercontexttheme';
 
 
 
 const SkeletonProfile = () => {
     const shimmerAnimation = useRef(new Animated.Value(0)).current;
-
+    const { isDarkMode } = useTheme();
     useEffect(() => {
       Animated.loop(
         Animated.timing(shimmerAnimation, {
@@ -23,11 +23,11 @@ const SkeletonProfile = () => {
       outputRange: [-400, 400],
     });
   return (
-    <View style={styles.container}>
+    <View  style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
        <Animated.View
         style={[
           styles.Scroller,
-          { backgroundColor: 'white',width:'100%',  height: 800,
+          { backgroundColor: 'white',width:'20%',  height: 800,
           zIndex:3, 
           position: 'absolute',transform: [{ translateX }] },
         ]}

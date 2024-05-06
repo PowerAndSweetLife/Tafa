@@ -1,10 +1,12 @@
 import React from 'react';
 import { StyleSheet, View, Animated } from 'react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef,useUser } from 'react';
+
+import { useTheme } from '../context/usercontexttheme';
 
 const SkeletonItem = () => {
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
-
+  const { isDarkMode } = useTheme();
   useEffect(() => {
     Animated.loop(
       Animated.timing(shimmerAnimation, {
@@ -21,7 +23,7 @@ const SkeletonItem = () => {
   });
 
   return (
-    <View style={styles.contenu}>
+    <View style={[styles.contenu, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]} >
       <Animated.View
         style={[
           styles.Scroller,
@@ -38,6 +40,7 @@ const SkeletonItem = () => {
             { backgroundColor: '#e0e0e0', width: 50,
             height: 50,
             borderRadius: 25, },
+          
           ]}
         />
       </View>
@@ -67,12 +70,12 @@ const styles = StyleSheet.create({
   contenu: {
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: 'white',
+    
     height: 70,
     borderRadius: 7,
     paddingTop: 7,
     justifyContent: 'center',
-    backgroundColor:'white',
+ 
   },
   ContenuProfil: {
     width: 55,

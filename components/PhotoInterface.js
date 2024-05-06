@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Image, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, StyleSheet, Image, Pressable ,Modal ,TouchableOpacity} from "react-native";
 import { BASE_URL } from "../helper/url";
 import { useRoute } from '@react-navigation/native';
 import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
-
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 
 function PhotoModif() {
@@ -17,6 +16,21 @@ function PhotoModif() {
   const [img_link, setImgLink] = useState('');
   const [img_couverture, setImgcouverture] = useState('');
   const defaultAvatar = userData.Sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+
+  const [isModalOpenArray, setIsModalOpenArray] = useState(Array.from({ length: 7 }, () => false));
+  const [isModalOpen, setIsModalOpen] = useState(false);
+   const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+  const [isModalOpen1, setIsModalOpen1] = useState(false);
+  const toggleModal1 = () => {
+    setIsModalOpen1(!isModalOpen1);
+  };
+  const toggleModalForImage = (index) => {
+    const newModalOpenArray = [...isModalOpenArray];
+    newModalOpenArray[index] = !newModalOpenArray[index];
+    setIsModalOpenArray(newModalOpenArray);
+  };
   useEffect(() => {
     fetch(BASE_URL + 'users')
       .then(response => response.json())
@@ -45,12 +59,32 @@ function PhotoModif() {
       if (donnees[0][`img_${i + 1}`]) {
         return (
           <View style={style.image} key={i}>
+            <Pressable onPress={() => toggleModalForImage(i)}>
             <Image
               source={{ uri: BASE_URL + donnees[0][`img_${i + 1}`] }}
               style={style.imageajouter}
             />
+            </Pressable>
             <View style={style.Iconcontenu}>
             </View>
+            
+       <Modal visible={isModalOpenArray[i]} transparent={true}>
+       <View style={style.Modal}>
+        <View style={style.modalContainer}>
+          <View style={style.modalContainerImage}>
+
+          <TouchableOpacity style={style.modalclose}  onPress={() => toggleModalForImage(i)}>
+          <Ionicons name="close" size={30} color='#f94990' />
+          </TouchableOpacity>
+          
+          <Image
+              source={{ uri: BASE_URL + donnees[0][`img_${i + 1}`] }}
+              style={style.imageajouter}
+            />
+            </View>
+          </View>
+        </View>
+      </Modal>
           </View>
         );
       } else {
@@ -64,20 +98,59 @@ function PhotoModif() {
       <View style={style.Modif1}>
         <View style={style.imageContainer}>
           <View style={style.image}>
-            <Image source={userData.img_link ? { uri: BASE_URL + img_link } : defaultAvatar}
+          <Pressable onPress={toggleModal}>
+          <Image source={userData.img_link ? { uri: BASE_URL + img_link } : defaultAvatar}
               style={style.imageajouter}></Image>
+        </Pressable>
+            
             <View style={style.Iconcontenu}>
             </View>
           </View>
           <View style={style.image}>
-            <Image source={userData.img_link ? { uri: BASE_URL + img_couverture } : defaultAvatar}
+          <Pressable onPress={toggleModal1}>
+            <Image source={userData.img_couverture ? { uri: BASE_URL + img_couverture } : defaultAvatar}
               style={style.imageajouter}></Image>
+            </Pressable>
             <View style={style.Iconcontenu}>
             </View>
           </View>
           {imagesJSX}
         </View>
       </View>
+      <Modal visible={isModalOpen} transparent={true}>
+      <View style={style.Modal}>
+        <View style={style.modalContainer}>
+          <View style={style.modalContainerImage}>
+
+          <TouchableOpacity style={style.modalclose} onPress={toggleModal}>
+          <Ionicons name="close" size={30} color='#f94990' />
+          </TouchableOpacity>
+          
+              <Image
+                source={userData.img_link ? { uri: BASE_URL + userData.img_link } : defaultAvatar}
+                style={style.modalImage}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={isModalOpen1} transparent={true}>
+      <View style={style.Modal}>
+        <View style={style.modalContainer}>
+          <View style={style.modalContainerImage}>
+
+          <TouchableOpacity style={style.modalclose} onPress={toggleModal1}>
+          <Ionicons name="close" size={30} color='#f94990' />
+          </TouchableOpacity>
+          
+              <Image
+                source={userData.img_couverture ? { uri: BASE_URL + userData.img_couverture } : defaultAvatar}
+                style={style.modalImage}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -125,6 +198,41 @@ const style = StyleSheet.create({
     height: '100%',
     borderRadius: 10,
   },
+  
+  modalContainer: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainerImage: {
+    //  backgroundColor:'red',
+    width: '95%',
+    height: '80%',
+  
+  },
+  modalImage:{
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+    zIndex:1,
+  },
+  modalclose:{
+    backgroundColor:'white',
+    width:30,
+    height:30,
+    position:'absolute',
+    right:-10,
+    top:-15,
+    borderRadius:50,
+    zIndex:5,
+  },
+  Modal:{
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+     width:'100%',
+     height:"100%"
+ },
 });
 
 export default PhotoModif;

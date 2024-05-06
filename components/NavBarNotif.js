@@ -4,12 +4,12 @@ import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
-
+import { useTheme } from './context/usercontexttheme';
 
 
 const NavBarNotif = () => {
   const navigation = useNavigation();
-
+  const { isDarkMode } = useTheme();
   const onPressRecherche = () => {
     navigation.navigate('Recherche');
   };
@@ -20,12 +20,12 @@ const NavBarNotif = () => {
 
   return (
 
-    <View style={styles.NavBar}>
+    <View  style={[styles.NavBar, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={styles.imageContainer}>
       <Pressable style={styles.IconBack} onPress={onPressBack}>
           <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
         </Pressable>
-        <Text style={styles.Notification}>Notifications</Text>
+        <Text  style={[styles.Notification, {fontFamily: 'modal-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Notifications</Text>
 
       </View>
       
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
 
   Notification:{
      fontSize:17,
-     fontWeight:'bold',
+   //  fontWeight:'bold',
   },
 
 

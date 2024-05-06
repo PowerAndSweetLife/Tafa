@@ -1,25 +1,30 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import { useTheme } from './context/usercontexttheme';
 import { useState, useEffect } from 'react';
 import { useUser } from './context/usercontext';
 import { BASE_URL } from "../helper/url";
-import { useRoute } from '@react-navigation/native';
-const logo = require('../assets/images/logo.png');
 import loadFonts from './loadFonts';
+import { useNavigation } from '@react-navigation/native';
 
-
-function AproposInterface() {
+function ModiferInterface() {
+  const navigation = useNavigation();
   useEffect(() => {
     loadFonts();
   }, []);
-  const route = useRoute();
-  const userData = route.params.userData;
-
-  const Id = userData && userData.Id ? userData.Id : 'defaultUserId';
+  const { Monprofil } = useUser();
+  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
   const { isDarkMode } = useTheme();
   const [donnees, setDonnees] = useState([]);
 
+
+
+
+
+  const onPressModifier = () => {
+    navigation.navigate('Modification');
+  };
+  
   useEffect(() => {
     fetch(BASE_URL + 'Apropos')
       .then(response => response.json())
@@ -43,8 +48,9 @@ function AproposInterface() {
     const age = today.getFullYear() - yearOfBirth;
     return age;
   };
-
-  if (donnees.length < 3) {
+  console.log('donner', donnees);
+  console.log("Longueur de donnees :", donnees.length); 
+  if (donnees.filter(item => Object.values(item).some(value => !value)).length > 0) {
     return (
       
       <View style={[style.Container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
@@ -64,36 +70,50 @@ function AproposInterface() {
 </View>
 
           
-          
+          <View style={style.ContenuBtn} >
+            <View style={style.Btn} >
+              <Pressable
+              onPress={onPressModifier}
+              //   onPress={onPressApropos}
+                style={({ pressed }) => [
+                  style.apropos0,
+               //     currentInterface === "Apropos",
+                  {
+                    backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
+                    borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
+                  },
+                ]}
+              >
+                <Text style={[style.TExtAproposPHoto, { fontFamily: 'custom-fontmessage', color: isDarkMode ? 'white' : 'white' }]}>Modifier</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </View>
 
 
     );
-  }
-
-
-
+  }else{
   return (
     <View style={[style.Container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={style.Contenu}>
         {donnees.map((item, index) => (
           <View key={index}>
-            <Text style={[style.Notification, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Sexe}</Text>
-            <Text style={[style.Notification, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Situation}</Text>
-            <Text style={[style.Notification, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.Date_de_naissance)} ans</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Sexe}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Situation}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.Date_de_naissance)} ans</Text>
 
-            <Text style={[style.Notification, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.Ville}</Text>
-            <Text style={[style.Notification, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Objectif}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.Ville}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Objectif}</Text>
 
             <View>
               <Text style={style.TextLight}>Emploi</Text>
-              <Text style={[style.esthic, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}> {item.Emploi}	 </Text>
+              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}> {item.Emploi}	 </Text>
             </View>
 
             <View>
               <Text style={style.TextLight}>Etude</Text>
-              <Text style={[style.esthic, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Droit a l'unniversite d'antananarivo</Text>
+              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Droit a l'unniversite d'antananarivo</Text>
             </View>
 
             <View>
@@ -102,7 +122,7 @@ function AproposInterface() {
 
             <View style={style.ContenuInteret}>
               {item.Centre_d_interet.split('/').map((Centre_d_interet, index) => (
-                <Text key={index} style={[style.interet, {fontFamily: 'custom-font', color: isDarkMode ? '#000000' : '#ffffff' }]}>
+                <Text key={index} style={[style.interet, { fontFamily: 'custom-font', color: isDarkMode ? '#000000' : '#ffffff' }]}>
                   {Centre_d_interet}
                 </Text>
               ))}
@@ -116,7 +136,7 @@ function AproposInterface() {
 
 
               {item.Langue.split('/').map((langue, index) => (
-                <Text key={index} style={[style.Langue, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>
+                <Text key={index} style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>
                   {langue}
                 </Text>
               ))}
@@ -124,20 +144,20 @@ function AproposInterface() {
 
             <View>
               <Text style={style.TextLight}>Signe astrologique</Text>
-              <Text style={[style.Langue, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Signe_Astrologie}</Text>
+              <Text style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Signe_Astrologie}</Text>
             </View>
 
             <View>
               <Text style={style.TextLight}>Mode de vie</Text>
-              <Text style={[style.Langue, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Alcool : {item.Alcool}</Text>
-              <Text style={[style.Langue, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Cigarette : {item.Cigarette}</Text>
+              <Text style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Alcool : {item.Alcool}</Text>
+              <Text style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Cigarette : {item.Cigarette}</Text>
             </View>
           </View>
         ))}
       </View>
     </View>
   );
-
+}
 }
 const style = StyleSheet.create({
   Container: {
@@ -147,15 +167,17 @@ const style = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     height: 400,
+    marginTop: 20,
   },
   Contenu: {
     width: '91%',
+
   },
   TextLight: {
-    color: 'grey',
+    color: 'lightgrey',
     marginTop: 10,
     fontFamily: 'custom-fontmessage',
-  
+
   },
   ContenuInteret: {
     display: 'flex',
@@ -165,7 +187,7 @@ const style = StyleSheet.create({
     left: -5,
   },
   interet: {
-    backgroundColor: 'grey',
+    backgroundColor: 'lightgrey',
     borderRadius: 15,
     paddingLeft: 10,
     paddingRight: 10,
@@ -177,31 +199,48 @@ const style = StyleSheet.create({
   },
   Containertextinfo: {
     width: '100%',
-    height: 220,
-    backgroundColor: 'red',
-    display: 'flex',
+    height: 50,
+        display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-
+    //marginTop: 10,
   },
   contenuLogo: {
     width: 120,
     height: 40,
 
-},
-Logo: {
+  },
+  Logo: {
     width: 120,
     height: 40,
 
-},
-porteurText: {
-   marginTop:10,
+  },
+  porteurText: {
+    marginTop: 10,
     height: 30,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
     // alignItems: 'center',
-},
+  },
+  ContenuBtn: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    //marginTop: 10,
+  },
+  apropos0: {
+    width: 150,
+    height: 30,
+    display: "flex",
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    margin: 8,
+    backgroundColor: "grey",
+    //left: -4,
+    borderWidth: 1,
+  },
 });
 
-export default AproposInterface;
+export default ModiferInterface;

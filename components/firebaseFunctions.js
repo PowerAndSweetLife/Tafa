@@ -1,8 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, push , onValue } from 'firebase/database';
-import messaging from '@react-native-firebase/messaging';
-import { EventEmitter } from 'events';
-
+import { getDatabase, ref, push, onValue } from 'firebase/database';
+import { messaging } from 'firebase/messaging';
 
 // Votre configuration Firebase
 const firebaseConfig = {
@@ -15,6 +13,9 @@ const firebaseConfig = {
   appId: "1:444808821936:web:243a5339773f19185dcf75",
   measurementId: "G-GZEMBD98F4"
 };
+
+// Initialiser Firebase
+const app = initializeApp(firebaseConfig);
 
 const insererDonnees = (Monprofil, Pseudo, profileimage) => {
   const db = getDatabase();
@@ -58,34 +59,34 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
       visitedUserId: Monprofil.Id,
       img_link: profileimage,
       visitorUserId: Pseudo,
-      Notifications: `${Pseudo} a visité votre profil`, 
+      Notifications: `${Pseudo} a visité votre profil`,
       timestamp: new Date().toISOString()
     })
-    .then(() => {
-      console.log('Données insérées avec succès !');
-
-      // Envoyer une notification à l'utilisateur visité
-      const notificationMessage = `${Pseudo} a visité votre profil`;
-      console.log(notificationMessage);
-      messaging().send({
-        token: userData.token, // Le token de l'utilisateur visité pour envoyer la notification
-        notification: {
-          title: 'Nouvelle visite de profil',
-          body: notificationMessage,
-        },
-      })
       .then(() => {
-        console.log('Notification envoyée avec succès !');
+        console.log('Données insérées avec succès !');
+
+        // Envoyer une notification à l'utilisateur visité
+        const notificationMessage = `${Pseudo} a visité votre profil`;
+        console.log(notificationMessage);
+        messaging().send({
+          token: userData.token, // Le token de l'utilisateur visité pour envoyer la notification
+          notification: {
+            title: 'Nouvelle visite de profil',
+            body: notificationMessage,
+          },
+        })
+          .then(() => {
+            console.log('Notification envoyée avec succès !');
+          })
+          .catch((error) => {
+            console.error('Erreur lors de l\'envoi de la notification :', error);
+          });
       })
       .catch((error) => {
-        console.error('Erreur lors de l\'envoi de la notification :', error);
+        console.error('Erreur lors de l\'insertion des données :', error);
       });
-    })
-    .catch((error) => {
-      console.error('Erreur lors de l\'insertion des données :', error);
-    });
   });
 };
 
 
-export { insererDonnees,  };
+export { insererDonnees, };

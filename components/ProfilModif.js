@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Image, Pressable, ActivityIndicator, Animated } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import AproposInterfacemodif from "../components/AproposInterfacemodif";
+import Bloquage from "../components/Bloquage";
+import ModiferInterface from "./ModiferInterface";
+import { useNavigation } from "@react-navigation/native";
+import Initialiseinterface from "../components/Initialiseinterface";
 import PhotoModif from "./PhotoModif";
 import { ScrollView } from "react-native";
 import { useUser } from './context/usercontext';
@@ -13,10 +16,40 @@ import { RefreshControl } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
-
+import { useTheme } from './context/usercontexttheme';
+import * as Font from 'expo-font';
+import { BackHandler } from 'react-native';
 
 
 function NavProfilModif() {
+  const navigation = useNavigation();
+  const handleBackPress = () => {
+    navigation.goBack(); // Revenir à l'écran précédent
+    return true; // Indiquer que l'événement a été géré
+};
+
+useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+    return () => {
+        backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+    };
+}, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
+
+
+  
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        'objectif-font': require('../assets/Fonts/GrandHotel-Regular.ttf'),
+       
+        
+      });
+    };
+    useEffect(() => {
+      loadFonts();
+    }, []);
+
+
   const [loading, setLoading] = useState(true);
   const [donnees, setDonnees] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -34,8 +67,8 @@ function NavProfilModif() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loadingSuccess, setLoadingSuccess] = useState(false);
   const [loadingProfileSuccess, setLoadingProfileSuccess] = useState(false);
-const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
-
+  const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
+  const { isDarkMode } = useTheme();
   const handleRefresh = () => {
     setIsRefreshing(true);
     setIsRefreshing(false);
@@ -45,8 +78,12 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
     setCurrentInterface("Photo");
   };
 
-  const onPressApropos = () => {
+  const onPressApropos = () => {onPressBloquage
     setCurrentInterface("Apropos");
+  };
+
+  const onPressBloquage = () => {
+    setCurrentInterface("Bloquage");
   };
 
   const uploadImageToServer = async (imageUri) => {
@@ -61,7 +98,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
 
       formData.append('Id', Id);
       formData.append('img_link', imageName);
-
+     
       const response = await fetch(BASE_URL + 'update_image', {
         method: 'POST',
         headers: {
@@ -69,7 +106,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
         },
         body: formData,
       });
-    
+      
     } catch (error) {
       console.error('Erreur lors de l\'envoi de l\'image:', error);
     }
@@ -92,7 +129,8 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
         setTimeout(() => {
           setLoadingProfile(false);
           setImageLoaded(true);
-         // setLoadingProfileSuccess(false);
+          
+          // setLoadingProfileSuccess(false);
           // Ne définissez pas loadingSuccess à false ici, car vous souhaitez afficher le message "Chargement terminé"
         }, 5000);
       }
@@ -140,11 +178,11 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
         setImgcouverture(result.assets[0].uri);
         uploadImagecouvertureToServer(result.assets[0].uri);
         setLoadingCouvertureSuccess(true); // Définir loadingSuccess à true lorsque le chargement est terminé
-       
+
         setTimeout(() => {
           setLoadingCouverture(false);
           setImageLoaded(true);
-        ///  setLoadingCouvertureSuccess(false);
+          ///  setLoadingCouvertureSuccess(false);
           // Ne définissez pas loadingSuccess à false ici, car vous souhaitez afficher le message "Chargement terminé"
         }, 5000);
       }
@@ -172,16 +210,22 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
   const defaultAvatar = (sexe) => {
     return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
   };
-  const renderCurrentInterface = () => {
-    switch (currentInterface) {
+
+
+const renderCurrentInterface = () => {
+  switch (currentInterface) {
       case "Photo":
-        return <PhotoModif />;
+          return <PhotoModif />;
       case "Apropos":
-        return <AproposInterfacemodif />;
+          return <ModiferInterface />
+          ;
+          case "Bloquage":
+            return <Bloquage />
+            ;
       default:
-        return <AproposInterfacemodif />;
-    }
-  };
+          return <Initialiseinterface />;
+  }
+};
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -234,7 +278,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
     ).start();
   }, [loadingProfileAnimation]);
   useEffect(() => {
-    if (!loadingProfile && imageLoaded &&loadingProfileSuccess) {
+    if (!loadingProfile && imageLoaded && loadingProfileSuccess) {
       setTimeout(() => {
         setIsRefreshing(true); // Déplacer setIsRefreshing ici
       }, 5000); // Attendre 3 secondes avant de rafraîchir
@@ -257,7 +301,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
         />
       }
     >
-      <ScrollView style={style.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[style.content, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]} showsVerticalScrollIndicator={false}>
         <View style={{ marginTop: 10 }}>
           <View style={style.couverture}>
 
@@ -269,10 +313,10 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
                 </Animated.View>
               ) : (
                 loadingCouvertureSuccess ? (
-                  <Text style={{ fontSize: 15, color:'#79328d',}}>Chargement terminé</Text>
+                  <Text style={{ fontSize: 15, color: '#79328d', }}>Chargement terminé</Text>
                 ) : (
                   <Image
-                  
+
                     source={img_couverture ? { uri: BASE_URL + img_couverture } : defaultAvatar(sexe)}
                     style={style.image1}
                   />
@@ -293,7 +337,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
           </View>
           <View style={style.profilcontenu}>
 
-            <View style={style.skeletcontenu}>
+            <View style={[style.skeletcontenu, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}>
 
 
 
@@ -305,8 +349,8 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
                 loadingProfileSuccess ? (
                   <Text style={style.textsuccesprofile}>Chargement terminé</Text>
                 ) : (
-                  <Image    source={img_link ? { uri: BASE_URL + img_link } : defaultAvatar(sexe)} style={style.profil} />
-               
+                  <Image source={img_link ? { uri: BASE_URL + img_link } : defaultAvatar(sexe)} style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]} />
+
                 )
               )}
 
@@ -315,6 +359,7 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
             <View style={style.Icon2}>
               <Pressable onPress={pickImage} style={({ pressed }) => [
                 style.Pressable,
+
                 { backgroundColor: pressed ? '#f94990' : 'white' },
                 { borderColor: pressed ? '#f94990' : '#07668f' },
               ]}>
@@ -323,25 +368,42 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
             </View>
           </View>
           <View>
-            <Text style={style.prenom}>{pseudo}</Text>
-            <Text style={style.description}>
+            <Text style={[style.prenom, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{pseudo}</Text>
+            <Text style={[style.description, {fontFamily: 'objectif-font',color: isDarkMode ? '#ffffff' : '#000000' }]}>
               "L'amour n'est pas un sentiment, c'est une force, une vertu"
             </Text>
           </View>
           <View style={style.apropos}>
-            <Pressable onPress={onPressApropos} style={({ pressed }) => [
-              style.apropos0, currentInterface === "Apropos",
-              { backgroundColor: pressed ? '#f94990' : 'white' },
-              { borderColor: pressed ? '#f94990' : '#07668f' },
-            ]}>
-              <Text style={style.TExtAproposPHoto}>A propos</Text>
+            <Pressable
+              onPress={onPressApropos}
+              style={({ pressed }) => [
+                style.apropos0,
+                currentInterface === "Apropos",
+                {
+                  backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
+                  borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+                },
+              ]}
+            >
+              <Text  style={[style.TExtAproposPHoto, {fontFamily: 'custom-fontmessage', color: isDarkMode ? 'white' : '#07668f' }]}>Apropos</Text>
             </Pressable>
             <Pressable onPress={onPressPhotos} style={({ pressed }) => [
               style.apropos1,
-              { backgroundColor: pressed ? '#f94990' : 'white' },
-              { borderColor: pressed ? '#f94990' : '#07668f' },
+              {
+                backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
+                borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+              },
             ]}>
-              <Text style={style.TExtAproposPHoto}>Photos</Text>
+              <Text style={[style.TExtAproposPHoto, { fontFamily: 'custom-fontmessage',color: isDarkMode ? 'white' : '#07668f' }]}>Photos</Text>
+            </Pressable>
+            <Pressable  onPress={onPressBloquage} style={({ pressed }) => [
+              style.apropos1,
+              {
+                backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
+                borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+              },
+            ]}>
+              <Text style={[style.TExtAproposPHoto, { fontFamily: 'custom-fontmessage',color: isDarkMode ? 'white' : '#07668f' }]}>Bloquer</Text>
             </Pressable>
           </View>
           {renderCurrentInterface()}
@@ -353,8 +415,9 @@ const [loadingCouvertureSuccess, setLoadingCouvertureSuccess] = useState(false);
 
 const style = StyleSheet.create({
   content: {
-    marginTop: 10,
+    //  marginTop: 10,
     width: '100%',
+
   },
   couverture: {
     width: '100%',
@@ -401,7 +464,7 @@ const style = StyleSheet.create({
   TExtAproposPHoto: {
     fontSize: 12,
     color: '#07668f',
-    fontWeight: 'bold',
+  //  fontWeight: 'bold',
   },
   profilcontenu: {
     width: 100,
@@ -419,14 +482,14 @@ const style = StyleSheet.create({
     backgroundColor: 'lightgrey',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'white',
+
   },
   profil: {
     width: '100%',
     height: '100%',
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: 'white',
+
   },
   Icon2: {
     bottom: 40,
@@ -439,14 +502,15 @@ const style = StyleSheet.create({
     justifyContent: 'center',
   },
   prenom: {
-    fontSize: 15,
+    fontSize: 17,
     paddingLeft: 12,
+    
   },
   description: {
-    fontSize: 13,
+    fontSize: 20,
     marginLeft: 13,
-  //  Color: "black",
-    fontWeight: 'bold',
+    //  Color: "black",
+  //  fontWeight: 'bold',
   },
   apropos: {
     marginTop: 15,

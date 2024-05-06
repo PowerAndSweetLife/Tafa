@@ -7,14 +7,15 @@ import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from './context/usercontext';
-
-
+import { useTheme } from './context/usercontexttheme';
+import { BackHandler } from 'react-native';
 
 
 const Suggestion = () => {
-    const { userData } = useUser();
-    const Id = userData && userData.Id ? userData.Id : 'defaultUserId';
+    const { Monprofil } = useUser();
+    const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
     const navigation = useNavigation();
+    const { isDarkMode } = useTheme();
     const [donnees, setDonnees] = useState([]);
     const [loading, setLoading] = useState(true);
     const onPressProfil = (userData) => {
@@ -22,12 +23,28 @@ const Suggestion = () => {
         navigation.navigate('Profil', { userData: userData });
       };
 
+      const handleBackPress = () => {
+        navigation.goBack(); // Revenir à l'écran précédent
+        return true; // Indiquer que l'événement a été géré
+    };
+    
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    
+        return () => {
+            backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+        };
+    }, []);
+
+
+
+
       useEffect(() => {
         fetch(BASE_URL + 'users')
           .then(response => response.json())
           .then(data => {
             // Filtrer les données pour ne pas inclure l'utilisateur connecté
-            const filteredData = data.filter(item => item.Id !== Id);
+            const filteredData = data.filter(item => item.Id !== Id && item.img_link);
             setDonnees(filteredData);
             setTimeout(() => setLoading(false), 5000);
           })
@@ -67,7 +84,7 @@ const Suggestion = () => {
     };
 
     return (
-        <View style={styles.Container}>
+        <View  style={[styles.Container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
             <Text style={styles.Text}>Suggestions</Text>
             <ScrollView horizontal={true} style={styles.scrollView} showsHorizontalScrollIndicator={false}>
                 <View style={styles.contenusug}>
@@ -110,7 +127,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         paddingTop: 10,
         paddingBottom: 10,
-        fontWeight: 'bold',
+        fontFamily: 'modal-font',
         marginLeft:10,
     },
     scrollView: {
@@ -138,8 +155,8 @@ const styles = StyleSheet.create({
     },
     VoirTout:{
         textAlign: 'center',
-         fontWeight: 'bold',
-        fontSize:10,
+        fontFamily: 'custom-font',
+        fontSize:13,
         color:'white',
     },
     image: {
@@ -151,7 +168,7 @@ const styles = StyleSheet.create({
         marginTop:7,
         marginLeft:2,
         fontSize:12,
-    
+        fontFamily: 'custom-font',
     },
     contenuVoir:{
         alignItems:'center',

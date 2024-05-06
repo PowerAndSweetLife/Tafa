@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { useEffect, useRef } from 'react';
-
+import { useTheme } from '../context/usercontexttheme';
 
 
 
 const SkeletonProfile = () => {
     const shimmerAnimation = useRef(new Animated.Value(0)).current;
-
+    const { isDarkMode } = useTheme();
     useEffect(() => {
         Animated.loop(
             Animated.timing(shimmerAnimation, {
@@ -23,7 +23,7 @@ const SkeletonProfile = () => {
         outputRange: [-400, 400],
     });
     return (
-        <View style={styles.Contenair}>
+        <View  style={[styles.Contenair, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
             <View style={styles.Pressable}>
 

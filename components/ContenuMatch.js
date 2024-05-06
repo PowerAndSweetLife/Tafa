@@ -8,7 +8,9 @@ import firebase from 'firebase/app';
 import { get, ref, getDatabase } from 'firebase/database';
 import { useUser } from './context/usercontext';
 import { BASE_URL } from "../helper/url";
-
+import { useTheme } from './context/usercontexttheme';
+import * as Font from 'expo-font';
+import { BackHandler } from 'react-native';
 
 
 
@@ -16,69 +18,92 @@ const ContenuMatch = () => {
   const navigation = useNavigation();
   const [matchedUsers, setMatchedUsers] = useState([]);
   const { Monprofil } = useUser();
+  const { isDarkMode } = useTheme();
+
 
 
   const onPressProfil = () => {
     navigation.navigate('Profil');
   };
   const firebaseConfig = {
-    apiKey: "AIzaSyCql_o_TZT7-bbBYY9PTa_ee8VfdaMQo4g",
-    authDomain: "tafa1-2a9e0.firebaseapp.com",
-    databaseURL: "https://tafa1-2a9e0-default-rtdb.firebaseio.com",
-    projectId: "tafa1-2a9e0",
-    storageBucket: "tafa1-2a9e0.appspot.com",
-    messagingSenderId: "444808821936",
-    appId: "1:444808821936:web:243a5339773f19185dcf75",
-    measurementId: "G-GZEMBD98F4"
+    apiKey: "AIzaSyAYKiIFezCeFDLl5ORLApWeOIhtSQrmWuU",
+    authDomain: "notification-tafa.firebaseapp.com",
+    databaseURL: "https://notification-tafa-default-rtdb.firebaseio.com",
+    projectId: "notification-tafa",
+    storageBucket: "notification-tafa.appspot.com",
+    messagingSenderId: "1081071061333",
+    appId: "1:1081071061333:web:d2be808d89d4c00ea687dc"
   };
   //const app = initializeApp(firebaseConfig);
   const database = getDatabase();
   const matchedUsersSet = new Set();
 
+  const fetchBlockedUsers = async () => {
+    try {
+      const blockedUsersResponse = await fetch(BASE_URL + 'usersBlocked');
+      if (!blockedUsersResponse.ok) {
+        throw new Error('Erreur lors de la récupération des utilisateurs bloqués');
+      }
+      return await blockedUsersResponse.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des utilisateurs bloqués:', error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     // Fonction asynchrone pour récupérer les utilisateurs correspondants
     const fetchMatchedUsers = async () => {
       try {
-        // Vérifiez si le profil de l'utilisateur actuel existe
+        // Vérifie si le profil de l'utilisateur actuel existe
         if (Monprofil) {
-          // Obtenez l'ID de l'utilisateur actuel à partir de Monprofil
+          // Obtient l'ID de l'utilisateur actuel à partir de Monprofil
           const userId = Monprofil.Id;
-          console.log("Mon profil ID:", userId);
-          // Récupérez un instantané des likes à partir de la base de données Firebase
-          const likesSnapshot = await get(ref(database, 'likes'));
-          console.log("Snapshot des likes:", likesSnapshot);
 
+          // Récupère un instantané des likes à partir de la base de données Firebase
+          const likesSnapshot = await get(ref(database, 'likes'));
+
+          // Vérifie si l'instantané contient des données
           if (likesSnapshot.exists()) {
-            // Initialisez un tableau pour stocker les utilisateurs correspondants
+            // Initialise un tableau pour stocker les utilisateurs correspondants
             const matchedUsers = [];
-            // Récupérez les données des likes à partir de l'instantané
+            // Récupère les données des likes à partir de l'instantané
             const likes = likesSnapshot.val();
-            // Parcourez chaque like dans les données récupérées
+            // Récupère la liste des utilisateurs bloqués
+            const blockedUsers = await fetchBlockedUsers();
+
+            // Parcours chaque like dans les données récupérées
             for (const likeKey in likes) {
               const like = likes[likeKey];
-              // Vérifiez si l'utilisateur actuel est le liker
-              if (userId === like.likerId) { // Vérifiez si l'utilisateur actuel est le liker
+
+              // Vérifie si l'utilisateur actuel est le liker
+              if (userId === like.likerId) {
                 const likedUserId = like.likedUserId;
-                console.log("ID de l'utilisateur aimé par l'utilisateur actuel ou connecté:", likedUserId);
 
-                // Parcourez à nouveau les likes pour vérifier les correspondances réciproques
-                for (const likeKey2 in likesSnapshot.val()) {
-                  const like2 = likesSnapshot.val()[likeKey2];
+                // Vérifie si l'utilisateur aimé a aimé l'utilisateur actuel
+                const likedBack = Object.values(likes).some(like2 =>
+                  likedUserId === like2.likerId && userId === like2.likedUserId
+                );
 
-                  // Vérifiez si l'utilisateur aimé a aimé l'utilisateur actuel
-                  if (likedUserId === like2.likerId && userId === like2.likedUserId) {
-                    console.log("L'utilisateur aimé a aimé l'utilisateur actuel.");
-                    if (!matchedUsersSet.has(likedUserId)) { // Vérifier si cet utilisateur correspondant n'a pas déjà été ajouté
-                      matchedUsersSet.add(likedUserId); // Ajouter l'ID de l'utilisateur correspondant à l'ensemble
-                      matchedUsers.push(like.likedUserProfile); // Ajouter l'utilisateur correspondant à la liste
-                    }
+                // Si l'utilisateur aimé a aimé l'utilisateur actuel
+                if (likedBack) {
+                  // Vérifie si l'utilisateur aimé est bloqué par l'utilisateur actuel
+                  const isBlocked = blockedUsers.some(blockedUser =>
+                    (blockedUser.blocking_user_id === userId && blockedUser.blocked_user_id === likedUserId) ||
+                    (blockedUser.blocking_user_id === likedUserId && blockedUser.blocked_user_id === userId)
+                  );
+
+                  // Si l'utilisateur aimé n'est pas bloqué et n'est pas déjà ajouté
+                  if (!isBlocked && !matchedUsersSet.has(likedUserId)) {
+                    // Ajoute l'utilisateur correspondant à la liste
+                    matchedUsersSet.add(likedUserId);
+                    matchedUsers.push(like.likedUserProfile);
                   }
                 }
               }
             }
-            // Mettez à jour l'état des utilisateurs correspondants avec le nouveau tableau
+            // Met à jour l'état des utilisateurs correspondants avec le nouveau tableau
             setMatchedUsers(matchedUsers);
-            console.log("Utilisateurs correspondants:", matchedUsers);
           } else {
             console.log("Aucun like trouvé.");
           }
@@ -88,41 +113,57 @@ const ContenuMatch = () => {
       }
     };
 
+    // Appelle la fonction fetchMatchedUsers une fois que Monprofil ou la base de données change
     fetchMatchedUsers();
   }, [Monprofil, database]);
 
+  const handleBackPress = () => {
+    navigation.goBack(); // Revenir à l'écran précédent
+    return true; // Indiquer que l'événement a été géré
+  };
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => {
+      backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+    };
+  }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={styles.LigneContenubox}>
         <View style={styles.LigneContenu}>
-          <Text style={styles.ListeText}>Liste Des Match</Text>
+          <Text style={[styles.ListeText, { fontFamily: 'titre-font', }]}>Liste Des Match</Text>
         </View>
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.contenu}>
-          {matchedUsers.map((userData, index) => (
-            <View key={index} style={styles.Imagcontainer}>
-              <Pressable onPress={onPressProfil}>
-
-                <Image
-                  source={{ uri: BASE_URL + userData.Images }}
-                  style={styles.image}
-                  onError={(error) => console.error("Erreur de chargement de l'image:", error)}
-                />
-                <View style={styles.NomEtStatut}>
-                  <Text style={styles.Nom}>{userData.nom}</Text>
-                  <View style={styles.statutContainer}>
-                    {userData.enLigne ? (
-                      <View style={styles.statutEnLigne}></View>
-                    ) : (
-                      <View style={styles.statutHorsLigne}></View>
-                    )}
+          {matchedUsers.length === 0 ? (
+            // Render SkeletonItem when matchedUsers is empty
+            <SkeletonItem />
+          ) : (
+            // Render matched users data
+            matchedUsers.map((userData, index) => (
+              <View key={index} style={styles.Imagcontainer}>
+                <Pressable onPress={onPressProfil}>
+                  <Image
+                    source={{ uri: BASE_URL + userData.Images }}
+                    style={styles.image}
+                    onError={(error) => console.error("Erreur de chargement de l'image:", error)}
+                  />
+                  <View style={styles.NomEtStatut}>
+                    <Text style={[styles.Nom, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.nom}</Text>
+                    <View style={styles.statutContainer}>
+                      {userData.enLigne ? (
+                        <View style={styles.statutEnLigne}></View>
+                      ) : (
+                        <View style={styles.statutHorsLigne}></View>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            </View>
-          ))}
+                </Pressable>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -138,7 +179,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flex: 1,
     flexWrap: 'wrap',
-    height: '100%',
+    paddingBottom: 50,
   },
   scrollView: {
     marginHorizontal: 20,
@@ -155,11 +196,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ListeText: {
+    fontWeight: 'bold',
     fontSize: 20,
     alignItems: 'center',
     borderBottomColor: '#07668f',
     borderBottomWidth: 1,
     height: 30,
+    color: '#79328d'
   },
   contenu: {
     display: 'flex',

@@ -2,9 +2,12 @@ import React from 'react'
 import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme } from './context/usercontexttheme';
+
+
 
 function NavProfilModif() {
-
+  const { isDarkMode } = useTheme();
       const navigation = useNavigation();
     //   const [currentInterface, setCurrentInterface] = useState("Profil");
     const onPressBack = () => {
@@ -14,7 +17,7 @@ function NavProfilModif() {
         navigation.navigate("message");
       };
   return (
-    <View style={style.Navbar}>
+    <View  style={[style.Navbar, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={style.header}>
         <Pressable onPress={onPressBack}>
           <Ionicons name="ios-arrow-back" size={20} color="#f94990"></Ionicons>

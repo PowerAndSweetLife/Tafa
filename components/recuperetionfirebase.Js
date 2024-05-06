@@ -1,6 +1,7 @@
 // firebaseFunctions.js
 
 
+import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push } from 'firebase/database';
 import messaging from '@react-native-firebase/messaging';
 
@@ -16,7 +17,6 @@ const firebaseConfig = {
   measurementId: "G-GZEMBD98F4"
 };
 
-// Initialize Firebase
 const insererDonnees = ( unsubscribe) => {
 // Obtenez une référence à votre base de données
 const db = getDatabase();

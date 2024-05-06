@@ -3,16 +3,16 @@ import { StyleSheet, Text, View, Image, Pressable, } from 'react-native';
 import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-
+import { useTheme } from '../context/usercontexttheme';
 
 
 
 const NavBarDiscu = () => {
     const navigation = useNavigation();
-
-    const onPressRecherche = () => {
-        navigation.navigate('Profil');
-    };
+    const { isDarkMode } = useTheme();
+    const onPressMenu = () => {
+        navigation.navigate('Menu');
+      };
     const handlePressBack = () => {
         navigation.goBack();
       };
@@ -23,7 +23,7 @@ const NavBarDiscu = () => {
     return (
 
 
-        <View style={styles.NavBar}>
+        <View  style={[styles.NavBar, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
             <View style={styles.AlignerTExt}>
 
@@ -35,7 +35,7 @@ const NavBarDiscu = () => {
 
 
                 <View style={styles.Text}>
-                    <Text  style={styles.Discussions}>Discussions</Text>
+                    <Text style={[styles.Discussions, { fontFamily: 'modal-font',color: isDarkMode ? '#ffffff':'#000000'  }]}>Discussions</Text>
                 </View>
 
             </View>
@@ -47,7 +47,7 @@ const NavBarDiscu = () => {
                 </Pressable>
 
            
-                <Pressable style={styles.Icon} onPress={onPressRecherche}>
+                <Pressable style={styles.Icon} onPress={onPressMenu}>
                     <Ionicons name="settings" size={20} color="#f94990" />
                 </Pressable>
 
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     },
     Discussions:{
         fontSize: 17,
-         fontWeight: 'bold',
+        // fontWeight: 'bold',
     },
 
 })

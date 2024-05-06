@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { BASE_URL } from "../helper/url";
-
+import { useTheme } from './context/usercontexttheme';
 
 
 
@@ -13,7 +13,7 @@ const NavMessage = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const userData = route.params.userData;
-  
+  const { isDarkMode } = useTheme();
   console.log( 'test',route.params.userData); // Check if userData is received correctly
   
 
@@ -24,14 +24,14 @@ const NavMessage = () => {
   return (
 
 
-    <View style={styles.NavBar}>
+    <View style={[styles.NavBar, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
       <View style={styles.imageContainer}>
         <Pressable style={styles.IconBack} onPress={onPressBack}>
           <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
         </Pressable>
       </View>
-      <View style={styles.contenuProfile}>
+      <View style={[styles.contenuProfile, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
         <View style={styles.IMageContenu}>
           <Image source={{ uri: BASE_URL + userData.img_link }} style={styles.IMage} ></Image>
@@ -39,9 +39,10 @@ const NavMessage = () => {
         </View>
 
         <View style={styles.TextContenu}>
+          
           <View style={styles.description}>
-            <Text style={styles.nom}>{userData.Nom}</Text>
-            <Text >EnLigne</Text>
+            <Text  style={[styles.nom, { color: isDarkMode ? '#ffffff':'#000000'  }]}>{userData.Nom}</Text>
+            <Text style={[{ fontFamily: 'custom-fontmessage',color: isDarkMode ? '#ffffff':'#000000'  }]} >EnLigne</Text>
           </View>
 
         </View>
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     // justifyContent: 'space-between',
     paddingLeft: 10,
     paddingRight: 10,
-    backgroundColor: 'white',
+    
   },
 
   iconcontainer: {
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
   },
   nom: {
     fontSize: 15,
-
+fontWeight:'bold',
   },
 
 })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -6,23 +6,24 @@ import { Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { BASE_URL } from "../../helper/url";
 import { useUser } from '../context/usercontext';
-
-
+import * as Font from 'expo-font'
+import loadFonts from '../loadFonts';
 
 
 const logo = require('../../assets/images/logo.png');
 
 const ContenuLogin = () => {
-
     const navigation = useNavigation();
     const [Email, setEmail] = useState('');
     const [Mots_de_passe, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [messagedError, setMessageError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [userId, setuserId] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const { setMonprofil } = useUser();
+    const [isFontLoaded, setIsFontLoaded] = useState(false);
 
     const handleLogin = () => {
         // Vérifier si les deux champs sont vides
@@ -46,6 +47,7 @@ const ContenuLogin = () => {
             setPasswordError('');
         }
     };
+
     //visibilité de mot de passe
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -72,24 +74,25 @@ const ContenuLogin = () => {
 
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
-                // La réponse est au format JSON, on peut la parser
                 const result = await response.json();
                 if ('success' in result && result.success) {
-                    setEmail('');
-                    setPassword('');
+
                     setMessageError('');
-                    setResetSuccess(true);
+                    setTimeout(() => {
+                        setResetSuccess(true);
+                        setEmail('');
+                        setPassword('');
+                    }, 8000);
                     const { user } = result;
-                    setMonprofil(user); // Stocker toutes les données de l'utilisateur dans l'état local
+                    setMonprofil(user);
+                    setuserId(user.Id);
+                    await updateEnligne(user.Id); // Appel de la fonction pour mettre à jour 'enLigne'
                     navigation.navigate('Accueil');
-                    console.log('Données de l\'utilisateur :', user);
                 } else {
                     setResetSuccess(false);
-                    // Afficher un message d'erreur si l'authentification a échoué
                     setMessageError('Adresse e-mail ou mot de passe incorrect.');
                 }
             } else {
-                // La réponse n'est pas au format JSON, gérer l'erreur
                 throw new Error('La réponse du serveur n\'est pas au format JSON');
             }
         } catch (error) {
@@ -97,45 +100,80 @@ const ContenuLogin = () => {
             throw new Error('Une erreur est survenue lors de l\'authentification. Veuillez réessayer plus tard.');
         }
     };
+
+    // Fonction pour mettre à jour 'enLigne' dans le backend
+    const updateEnligne = async (userId) => {
+        console.log(userId);
+        try {
+            const response = await fetch(BASE_URL + 'updateEnligne', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    enLigne: "true",
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors de la mise à jour de enLigne');
+            }
+
+            const result = await response.json();
+            console.log(result);
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de enLigne:', error);
+            throw new Error('Une erreur est survenue lors de la mise à jour de enLigne. Veuillez réessayer plus tard.');
+        }
+    };
+
     const onPressmotsdepasseoublier = () => {
         navigation.navigate('MotdePasse');
     };
-
-
+    useEffect(() => {
+        const loadFonts = async () => {
+            await Font.loadAsync({
+                'modal-font': require('../../assets/Fonts/Montserrat-Bold.ttf'),
+                'custom-fontmessage': require('../../assets/Fonts/Montserrat-Regular.ttf'),
+            });
+            setIsFontLoaded(true); // Mettre à jour l'état pour indiquer que la police est chargée
+        };
+        loadFonts();
+    }, []);
 
     return (
         <KeyboardAwareScrollView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}            
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <View style={styles.container}>
-
                 <View style={styles.imageContainer}>
                     <Image source={logo} style={{ width: 130, height: 40 }} />
                 </View>
                 <View style={styles.COntenuTExtCOnnexion}>
-                    <Text style={styles.title}>Connexion</Text>
+                    <Text style={[styles.title, { fontFamily: isFontLoaded ? 'modal-font' : null }]}>Connexion</Text>
                 </View>
                 <View>
-                    <Text style={styles.text}>Votre adresse e-mail :</Text>
+                    <Text style={[styles.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Votre adresse e-mail :</Text>
                     <View style={styles.textinputMail}>
                         <TextInput
-                            style={styles.input1}
+
+                            style={[styles.input1, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}
                             placeholder="Email"
                             onChangeText={(text) => setEmail(text)}
                             value={Email}
                         />
                     </View>
                     <Text style={styles.errorText}>{emailError}</Text>
-
                 </View>
 
                 <View>
-                    <Text style={styles.text}>Votre mot de passe :</Text>
-
+                    <Text style={[styles.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Votre mot de passe :</Text>
                     <View style={styles.textinputMdp}>
                         <TextInput
 
-                            style={styles.input2}
+                            style={[styles.input2, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}
                             placeholder="Mot de passe"
                             secureTextEntry={!isPasswordVisible}
                             onChangeText={(text) => setPassword(text)}
@@ -150,7 +188,6 @@ const ContenuLogin = () => {
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.errorText}>{passwordError}</Text>
-
                     <View style={styles.boxforgetPassword}>
                         <TouchableOpacity style={styles.forgetPassword} onPress={onPressmotsdepasseoublier}>
                             <Text style={styles.textinscription1}>Mot de passe oublié</Text>
@@ -159,7 +196,7 @@ const ContenuLogin = () => {
                 </View>
 
                 <TouchableOpacity style={styles.button} onPress={() => { handleAuth(); handleLogin() }}>
-                    <Text style={styles.buttonText}>Se connecter</Text>
+                    <Text style={[styles.buttonText, { fontFamily: isFontLoaded ? 'modal-font' : null }]} >Se connecter</Text>
                 </TouchableOpacity>
                 <Text style={styles.errorText1}>{messagedError}</Text>
                 <View style={styles.textinscription}>
@@ -168,14 +205,11 @@ const ContenuLogin = () => {
                         <Text style={styles.textinscription1}>S'incrire ici !</Text>
                     </TouchableOpacity>
                 </View>
-
             </View>
-
-
         </KeyboardAwareScrollView>
-
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -184,7 +218,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 150,
-
     },
     imageContainer: {
         display: 'flex',
@@ -193,8 +226,6 @@ const styles = StyleSheet.create({
         height: 40,
         alignItems: 'center',
         justifyContent: 'center',
-
-
     },
     COntenuTExtCOnnexion: {
         display: 'flex',
@@ -204,13 +235,14 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'normal',
         marginBottom: 20,
-        textDecorationLine: 'underline',
+        // textDecorationLine: 'underline',
         marginTop: 20,
 
     },
     text: {
         marginLeft: 10,
         fontSize: 15,
+
     },
     textinputMail: {
         display: 'flex',
@@ -229,7 +261,7 @@ const styles = StyleSheet.create({
     input1: {
         height: 40,
         width: '90%',
-
+        //  fontFamily: 'custom-fontmessage'
     },
     textinputMdp: {
         display: 'flex',
@@ -248,24 +280,17 @@ const styles = StyleSheet.create({
     input2: {
         height: 40,
         width: '80%',
-
+        //   fontFamily: 'custom-fontmessage'
     },
     boxforgetPassword: {
         display: 'flex',
         alignItems: 'flex-end',
-
-
     },
     forgetPassword: {
         display: 'flex',
         marginRight: 20,
         marginBottom: 10,
         alignItems: 'flex-end',
-
-
-    },
-    textforgetPassword: {
-        color: '#582828',
     },
     button: {
         backgroundColor: '#79328d',
@@ -274,13 +299,12 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         marginRight: 10,
         width: '90%',
-
     },
     buttonText: {
         color: 'white',
         textAlign: 'center',
-        fontWeight: 'bold',
-
+        //  fontWeight: 'bold',
+        //  fontFamily: 'modal-font'
     },
     textinscription: {
         display: 'flex',
@@ -288,12 +312,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-around',
         marginTop: 20,
-
-
     },
     inscription: {
         marginRight: 10,
-
     },
     textinscription1: {
         color: 'blue',
@@ -310,9 +331,8 @@ const styles = StyleSheet.create({
     errorText1: {
         color: 'red',
         marginTop: -10,
-        padding: 10,       
+        padding: 10,
     }
-
 });
 
 export default ContenuLogin;

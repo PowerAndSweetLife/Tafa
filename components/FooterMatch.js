@@ -2,12 +2,16 @@ import { StyleSheet, Text, View, Pressable,} from 'react-native';
 import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from './context/usercontexttheme';
+import loadFonts from './loadFonts';
+import  { useState, useEffect } from 'react';
+
 
 
 const Footer = () => {
 
   const navigation = useNavigation();
-
+  const { isDarkMode } = useTheme();
   const onPressHome = () => {
     navigation.navigate('Accueil');
   };
@@ -24,34 +28,36 @@ const Footer = () => {
 ;
 
 
-
+useEffect(() => {
+  loadFonts();
+}, []);
 
 
 
 
   return (
-    <View style={styles.footerfixed}>
+    <View   style={[styles.footerfixed, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={styles.footer}>
 
         <Pressable style={styles.Icon} onPress={onPressHome}>
           <Ionicons name="home" size={20} color="lightgrey" />
-          <Text style={styles.Accueil}>Accueil</Text>
+          <Text  style={[styles.Accueil,{ fontFamily: 'custom-font'}]}>Accueil</Text>
         </Pressable>
 
         <Pressable style={styles.Icon} onPress={onPressRencontre}>
           <Ionicons name="location" size={20} color="lightgrey" />
-          <Text style={styles.colortext}>Rencontres</Text>
+          <Text  style={[styles.colortext,{ fontFamily: 'custom-font'}]}>Rencontres</Text>
         </Pressable>
 
 
         <Pressable style={styles.Icon} onPress={onPressMessage}>
           <Ionicons name="chatbubble-ellipses" size={20} color="lightgrey" />
-          <Text style={styles.colortext}>Messages</Text>
+          <Text  style={[styles.colortext,{ fontFamily: 'custom-font'}]}>Messages</Text>
         </Pressable>
 
         <Pressable style={styles.Icon} onPress={onPressMatch}>
           <Ionicons name="heart" size={20} color="#f94990" />
-          <Text style={styles.Match}>Match</Text>
+          <Text  style={[styles.Match,{ fontFamily: 'custom-font'}]}>Match</Text>
         </Pressable>
 
       </View>
@@ -82,20 +88,22 @@ const styles = StyleSheet.create({
   },
   Icon: {
     alignItems: 'center',
+    
+    width:100,
   },
   Accueil: {
     color: 'lightgrey',
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
     fontSize:10,
   },
   colortext: {
     color: 'lightgrey',
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
     fontSize: 10,
   },
   Match:{
     color: '#f94990',
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
     fontSize: 10,
   },
 });

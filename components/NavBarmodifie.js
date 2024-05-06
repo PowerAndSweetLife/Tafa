@@ -1,19 +1,19 @@
-import { StyleSheet, Text, View, Pressable, } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View, Image, Pressable, } from 'react-native';
 import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../context/usercontexttheme';
+
+import { useTheme } from './context/usercontexttheme';
 
 
-
-const NavBarNotif = () => {
+const NavBarmodifie = () => {
   const navigation = useNavigation();
   const { isDarkMode } = useTheme();
-  
+
   const onPressBack = () => {
     navigation.goBack();
   };
-
 
 
   return (
@@ -23,14 +23,13 @@ const NavBarNotif = () => {
       <Pressable style={styles.IconBack} onPress={onPressBack}>
           <Ionicons name="ios-arrow-back" size={25} color="#f94990" />
         </Pressable>
-        <Text  style={[styles.Notification, {fontFamily: 'modal-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Profil</Text>
+       
 
       </View>
       
-   
-      </View>
+  
      
-   
+    </View>
     
   )
 }
@@ -43,11 +42,10 @@ const styles = StyleSheet.create({
      marginTop:30,
     paddingBottom: 10,
     width: '100%',
-    height: 60,
+    height: 50,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor:'white'
   },
   imageContainer: {
     width: 70,
@@ -90,4 +88,4 @@ const styles = StyleSheet.create({
 })
 
 
-export default NavBarNotif
+export default NavBarmodifie

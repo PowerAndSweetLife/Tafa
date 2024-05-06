@@ -9,10 +9,12 @@ import Modal from 'react-native-modal';
 import * as ImagePicker from 'expo-image-picker';
 import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/context/usercontext';
+import { useTheme } from './context/usercontexttheme';
+
 
 function PhotoModif() {
 
-
+  const { isDarkMode } = useTheme();
   const [selectedImage, setSelectedImage] = useState(null);
   const { Monprofil } = useUser();
   const pseudo = Monprofil && Monprofil.Pseudo ? Monprofil.Pseudo : 'pseudo par défaut';
@@ -222,6 +224,9 @@ function PhotoModif() {
       console.error('Erreur lors de la suppression de l\'image:', error);
     }
   };
+  const closeModal = () => {
+    setIsErrorModalVisible(false);
+  };
 
   const imagesJSX = donnees.length > 0 ? (
     Array.from({ length: 7 }, (_, i) => {
@@ -254,25 +259,30 @@ function PhotoModif() {
 
   return (
     <View style={style.Container}>
-      <View style={style.Header}>
-        <Ionicons style={{ marginLeft: -20, }} name="ios-images" size={25} color="#07668f" />
+      <View  style={[style.Header, { backgroundColor: isDarkMode ? '#000000' : 'white' }]}>
+        <Ionicons style={{ marginLeft: -20, }} name="ios-images" size={25}  color={isDarkMode ? '#f94990' : '#07668f'} />
         <Pressable onPress={pickImageautre} style={({ pressed }) => [
           style.btnajout,
-          { backgroundColor: pressed ? '#f94990' : 'white' },
-          { borderColor: pressed ? '#f94990' : '#07668f' },
+          {
+            backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#f94990') : (pressed ? '#f94990' : 'white'),
+            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+          },
         ]}>
-          <Text style={style.Ajouter}>Ajouter une photo</Text>
+          <Text style={[style.Ajouter, {fontFamily: 'custom-fontmessage',  color: isDarkMode ? '#ffffff' : '#07668f' }]}>Ajouter une photo</Text>
         </Pressable>
       </View>
-      <Text style={style.Title}>Ajouter ou Supprimer</Text>
-      <View style={style.Modif1}>
+      <Text style={[style.Title,{fontFamily: 'titre-font'}]}>Ajouter ou Supprimer</Text>
+      <View style={[style.Modif1, {
+        backgroundColor: isDarkMode ? '#000000' : '#ffffff',
+       
+      }]}>
         <View style={style.imageContainer}>
-          <View style={style.image}>
+          <View style={style.image} >
             <Image source={{ uri: BASE_URL + img_link }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
           </View>
-          <View style={style.image}>
+          <View  style={style.image}>
             <Image source={{ uri: BASE_URL + img_couverture }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
@@ -283,6 +293,7 @@ function PhotoModif() {
       <Modal isVisible={isErrorModalVisible}
         animationIn="fadeIn"
         animationOut="fadeOut"
+        onRequestClose={closeModal}
         backdropOpacity={0}
       >
 
@@ -292,8 +303,11 @@ function PhotoModif() {
             { backgroundColor },
           ]}
         >
-          
+        
           <View style={style.contenuerreurText}>
+          <Pressable onPress={closeModal} style={style.closemodale}>
+                  <Ionicons name="close-circle" size={30} color='white' />
+                </Pressable>
             <Text style={style.modalText1}>{errorMessage1}</Text>
             <Text style={style.modalText2}>{errorMessage2}</Text>
           </View>
@@ -342,7 +356,7 @@ const style = StyleSheet.create({
     borderColor: 'lightgrey',
     display: 'flex',
     flexDirection: 'row',
-    // backgroundColor: 'lightgrey',
+  // backgroundColor: 'lightgrey',
   },
   imageContainer: {
     width: '100%',
@@ -359,8 +373,8 @@ const style = StyleSheet.create({
     width: '30%',
     height: 150,
     borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'lightgrey',
+  //  borderWidth: 1,
+    
     marginTop: 20,
     marginLeft: '2.5%',
   },
@@ -381,13 +395,13 @@ const style = StyleSheet.create({
   Title: {
     color: '#79328d',
     fontSize: 17,
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
     paddingBottom: 10,
     marginTop: 10,
   },
   Ajouter: {
     fontSize: 12,
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
   },
   modalContent: {
     display: 'flex',
@@ -421,11 +435,12 @@ const style = StyleSheet.create({
     marginLeft: 20,
     fontSize: 15,
   },
-  modalButton: {
-
+  closemodale: {
+position:'absolute',
     alignSelf: 'flex-end',
-    top: -22,
-    //right:-10,
+ right:-35,
+ top:-17
+ 
   },
   contenuerreurText: {
     width: 300,

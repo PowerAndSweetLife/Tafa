@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable, ScrollView, } from 'react-native';
+import { StyleSheet, Text, View, Image, Pressable, ScrollView,} from 'react-native';
 import React from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -8,7 +8,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 const Invitation = () => {
     // Liste complète d'utilisateurs (fictive)
     const allUsers = [
-
+       
         { id: 3, name: 'MIary', imageSource: require('../assets/images/test5.jpg') },
         { id: 4, name: 'Danny', imageSource: require('../assets/images/test2.jpg') },
         { id: 5, name: 'Mathieu', imageSource: require('../assets/images/test.jpg') },
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
         height: 220,
         borderRadius: 7,
     },
-
+   
     Buttoncontainer: {
         display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        padding: 10,
+        justifyContent:'space-around',
+         padding:10,
     }
 
 
