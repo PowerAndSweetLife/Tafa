@@ -7,9 +7,8 @@ import 'firebase/database';
 import firebase from 'firebase/app';
 import { get, ref, getDatabase } from 'firebase/database';
 import { useUser } from './context/usercontext';
-import { BASE_URL } from "../helper/url";
+import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
 import { useTheme } from './context/usercontexttheme';
-import * as Font from 'expo-font';
 import { BackHandler } from 'react-native';
 
 
@@ -20,21 +19,23 @@ const ContenuMatch = () => {
   const { Monprofil } = useUser();
   const { isDarkMode } = useTheme();
 
-
-
   const onPressProfil = () => {
     navigation.navigate('Profil');
   };
-  const firebaseConfig = {
-    apiKey: "AIzaSyAYKiIFezCeFDLl5ORLApWeOIhtSQrmWuU",
-    authDomain: "notification-tafa.firebaseapp.com",
-    databaseURL: "https://notification-tafa-default-rtdb.firebaseio.com",
-    projectId: "notification-tafa",
-    storageBucket: "notification-tafa.appspot.com",
-    messagingSenderId: "1081071061333",
-    appId: "1:1081071061333:web:d2be808d89d4c00ea687dc"
+
+  const handleBackPress = () => {
+    navigation.goBack(); // Revenir à l'écran précédent
+    return true; // Indiquer que l'événement a été géré
   };
-  //const app = initializeApp(firebaseConfig);
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+    return () => {
+      backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+    };
+  }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
+
+ 
   const database = getDatabase();
   const matchedUsersSet = new Set();
 
@@ -58,7 +59,7 @@ const ContenuMatch = () => {
         // Vérifie si le profil de l'utilisateur actuel existe
         if (Monprofil) {
           // Obtient l'ID de l'utilisateur actuel à partir de Monprofil
-          const userId = Monprofil.Id;
+          const userId = Monprofil.id;
 
           // Récupère un instantané des likes à partir de la base de données Firebase
           const likesSnapshot = await get(ref(database, 'likes'));
@@ -117,22 +118,13 @@ const ContenuMatch = () => {
     fetchMatchedUsers();
   }, [Monprofil, database]);
 
-  const handleBackPress = () => {
-    navigation.goBack(); // Revenir à l'écran précédent
-    return true; // Indiquer que l'événement a été géré
-  };
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-    return () => {
-      backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
-    };
-  }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={styles.LigneContenubox}>
         <View style={styles.LigneContenu}>
-          <Text style={[styles.ListeText, { fontFamily: 'titre-font', }]}>Liste Des Match</Text>
+          <Text style={styles.ListeText}>Liste Des Match</Text>
         </View>
       </View>
       <ScrollView style={styles.scrollView}>
@@ -146,14 +138,14 @@ const ContenuMatch = () => {
               <View key={index} style={styles.Imagcontainer}>
                 <Pressable onPress={onPressProfil}>
                   <Image
-                    source={{ uri: BASE_URL + userData.Images }}
+                    source={{ uri: BASE_URL_IMAGE+'profile/' + userData.photo }}
                     style={styles.image}
                     onError={(error) => console.error("Erreur de chargement de l'image:", error)}
                   />
                   <View style={styles.NomEtStatut}>
-                    <Text style={[styles.Nom, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.nom}</Text>
+                    <Text style={[styles.Nom, { color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.pseudo}</Text>
                     <View style={styles.statutContainer}>
-                      {userData.enLigne ? (
+                      {userData.status ? (
                         <View style={styles.statutEnLigne}></View>
                       ) : (
                         <View style={styles.statutHorsLigne}></View>
@@ -179,7 +171,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flex: 1,
     flexWrap: 'wrap',
-    paddingBottom: 50,
+    height: '100%',
   },
   scrollView: {
     marginHorizontal: 20,

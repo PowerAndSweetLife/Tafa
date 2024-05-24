@@ -7,25 +7,33 @@ import { BASE_URL } from "../helper/url";
 import { useState } from 'react';
 import { insererDonnees } from './firebaseinsertionmessages';
 import { insererimages } from './firebaseinsertionmessages';
+import { insereremojies } from './firebaseinsertionmessages';
 import { useTheme } from './context/usercontexttheme';
 import * as ImagePicker from 'expo-image-picker';
 import { v4 as uuidv4 } from 'uuid';
+import EmojiSelector from 'react-native-emoji-selector';
 
 
 function FooterMessages() {
   const route = useRoute();
   const { isDarkMode } = useTheme();
   const userData1 = route.params.userData;
-  const Idrecusmes = userData1 && userData1.Id ? userData1.Id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
-  const Nomrecusmes = userData1 && userData1.Nom ? userData1.Nom : 'Nom';
-  const profilrecumes = userData1 && userData1.img_link ? userData1.img_link : 'img_link';
+  const Idrecusmes = userData1 && userData1.id ? userData1.id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
+  const Nomrecusmes = userData1 && userData1.pseudo ? userData1.pseudo : 'Nom';
+  const profilrecumes = userData1 && userData1.photo ? userData1.photo : 'photo';
   const { Monprofil } = useUser();
-  const Idenvoyermes = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
-  const Nomenvoyermes = Monprofil && Monprofil.Nom ? Monprofil.Nom : 'Nom';
-  const profilenvoyermes = Monprofil && Monprofil.img_link ? Monprofil.img_link : 'img_link';
+  const Idenvoyermes = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
+  const Nomenvoyermes = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'Nom';
+  const profilenvoyermes = Monprofil && Monprofil.photo ? Monprofil.photo : 'photo';
   const [inputValue, setInputValue] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
+  const [emojiSelected, setEmojiSelected] = useState(false);
 
+const handleEmojiSelected = (emoji) => {
+  setInputValue(prevValue => prevValue + emoji); 
+  setEmojiSelected(true); 
+  insereremojies(Idenvoyermes, Idrecusmes,emoji, profilrecumes, Nomrecusmes, Nomenvoyermes, profilenvoyermes); 
+};
 
 
   const uploadImageToServer = async (imageUri, imageName) => {
@@ -36,8 +44,9 @@ function FooterMessages() {
         name: imageName, 
         type: 'image/jpg',
       });
+      console.log('envoyer',imageName);
       formData.append('img_link', imageName);
-
+     
 
       const response = await fetch(BASE_URL + 'envoyermessage_image', {
         method: 'POST',
@@ -63,7 +72,9 @@ function FooterMessages() {
       });
 
       if (!result.canceled) {
-        const imageName = result.assets[0].uri.split('/').pop();
+      
+        const imageName = `message-${Nomenvoyermes}-${Date.now()}.jpg`;
+        console.log('ick',imageName);
         setSelectedImage(imageName);
         uploadImageToServer(result.assets[0].uri, imageName); 
         insererimages(Idenvoyermes, Idrecusmes, imageName, profilrecumes, Nomrecusmes, Nomenvoyermes, profilenvoyermes);
@@ -74,7 +85,13 @@ function FooterMessages() {
     }
   };
 
+  const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
 
+
+  const toggleEmojiPicker = () => {
+    setEmojiPickerVisible(!emojiPickerVisible);
+   
+};
 
   const onPressEnvoyer = () => {
     if (inputValue.trim() !== '') {
@@ -87,12 +104,23 @@ function FooterMessages() {
   };
 
   return (
+    <View >
+    {emojiPickerVisible && (
+      <EmojiSelector
+      style={{width:'100%',height:300}}    
+     showSearchBar={false}
+          columns={7}
+          onEmojiSelected={handleEmojiSelected}
+      />
+  )}
+ 
+
 
     <View style={[style.contenair, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
       <View style={style.Contenu}>
 
         <View style={style.COntenuImage}>
-          <Pressable onPress={pickImage}>
+        <Pressable onPress={pickImage}>
             <Ionicons name="ios-camera" size={30} color={isDarkMode ? '#79328d' : '#f94990'}></Ionicons>
           </Pressable>
         </View>
@@ -104,6 +132,9 @@ function FooterMessages() {
             onChangeText={(text) => setInputValue(text)}
             value={inputValue}
           />
+          <Pressable onPress={toggleEmojiPicker}>
+                        <Ionicons name="happy" size={30} color={isDarkMode ? '#79328d' : '#f94990'}></Ionicons>
+                    </Pressable>
         </View>
 
         <View style={style.COntenuSend}>
@@ -113,6 +144,7 @@ function FooterMessages() {
         </View>
 
       </View>
+    </View>
     </View>
   );
 }
@@ -137,6 +169,8 @@ const style = StyleSheet.create({
   },
 
   COntenuInput: {
+    display:'flex',
+    flexDirection:'row',
     width: '70%',
     height: 35,
     borderRadius: 30,
@@ -153,7 +187,7 @@ const style = StyleSheet.create({
     right: 5,
   },
   Input: {
-    width: '100%',
+    width: '88%',
     height: 35,
     borderRadius: 20,
     flexWrap: 'wrap',

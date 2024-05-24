@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, Image, Animated } from "react-native
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState, useEffect, useRef } from 'react';
 //import { useUser } from './context/usercontext';
-import { BASE_URL } from "../helper/url";
+import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
 import Modal from 'react-native-modal';
 import * as ImagePicker from 'expo-image-picker';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,8 +17,8 @@ function PhotoModif() {
   const { isDarkMode } = useTheme();
   const [selectedImage, setSelectedImage] = useState(null);
   const { Monprofil } = useUser();
-  const pseudo = Monprofil && Monprofil.Pseudo ? Monprofil.Pseudo : 'pseudo par défaut';
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const pseudo = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'pseudo par défaut';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
 
   const [img_link, setImgLink] = useState('');
   const [img_couverture, setImgcouverture] = useState('');
@@ -44,14 +44,14 @@ function PhotoModif() {
       .then(response => response.json())
       .then(data => {
 
-        const filteredData = data.filter(user =>  user.Id ===  Id);
+        const filteredData = data.filter(user => user.id === Id);
         setDonnees(filteredData);
         console.log(filteredData);
 
         if (filteredData.length > 0) {
           // Mettre à jour l'URL de l'image si des données filtrées sont disponibles
-          setImgLink(filteredData[0].img_link);
-          setImgcouverture(filteredData[0].img_couverture);
+          setImgLink(filteredData[0].photo);
+          setImgcouverture(filteredData[0].couverture);
 
         }
       })
@@ -88,12 +88,12 @@ function PhotoModif() {
     }
   };
   const defaultAvatar = (sexe) => {
-    return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+    return sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
   };
   const pickImageautre = async () => {
     const response = await fetch(BASE_URL + 'users');
     const userData = await response.json();
-    const filteredUserData = userData.find(user => user.Pseudo === pseudo); // Vérifier seulement pour l'utilisateur avec le pseudo "Mathieu"
+    const filteredUserData = userData.find(user => user.pseudo === pseudo); // Vérifier seulement pour l'utilisateur avec le pseudo "Mathieu"
 
     // Vérifier si tous les champs d'images sont remplis pour l'utilisateur avec le pseudo "Mathieu"
     if (filteredUserData) {
@@ -207,14 +207,14 @@ function PhotoModif() {
         },
         body: JSON.stringify({
           Id: Id,
-          imgIndex: index + 1, 
+          imgIndex: index + 1,
         }),
       });
 
       if (response.ok) {
-               setDonnees((prevDonnees) => {
+        setDonnees((prevDonnees) => {
           const updatedDonnees = [...prevDonnees];
-          updatedDonnees[0][`img_${index + 1}`] = ''; 
+          updatedDonnees[0][`img_${index + 1}`] = '';
           return updatedDonnees;
         });
       } else {
@@ -247,43 +247,43 @@ function PhotoModif() {
           </View>
         );
       } else {
-        return null; 
+        return null;
       }
     })
   ) : null;
 
   const backgroundColor = shimmerAnimation.interpolate({
     inputRange: [0, 0.3, 0.5, 1],
-    outputRange: ['#79328d', '#f94990', '#79328d', '#f94990'], 
+    outputRange: ['#79328d', '#f94990', '#79328d', '#f94990'],
   });
 
   return (
     <View style={style.Container}>
-      <View  style={[style.Header, { backgroundColor: isDarkMode ? '#000000' : 'white' }]}>
-        <Ionicons style={{ marginLeft: -20, }} name="ios-images" size={25}  color={isDarkMode ? '#f94990' : '#07668f'} />
+      <View style={[style.Header, { backgroundColor: isDarkMode ? '#000000' : 'white' }]}>
+        <Ionicons style={{ marginLeft: -20, }} name="ios-images" size={25} color={isDarkMode ? '#f94990' : '#07668f'} />
         <Pressable onPress={pickImageautre} style={({ pressed }) => [
           style.btnajout,
           {
             backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#f94990') : (pressed ? '#f94990' : 'white'),
-            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
           },
         ]}>
-          <Text style={[style.Ajouter, {fontFamily: 'custom-fontmessage',  color: isDarkMode ? '#ffffff' : '#07668f' }]}>Ajouter une photo</Text>
+          <Text style={[style.Ajouter, { fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : '#07668f' }]}>Ajouter une photo</Text>
         </Pressable>
       </View>
-      <Text style={[style.Title,{fontFamily: 'titre-font'}]}>Ajouter ou Supprimer</Text>
+      <Text style={[style.Title, { fontFamily: 'titre-font' }]}>Ajouter ou Supprimer</Text>
       <View style={[style.Modif1, {
         backgroundColor: isDarkMode ? '#000000' : '#ffffff',
-       
+
       }]}>
         <View style={style.imageContainer}>
           <View style={style.image} >
-            <Image source={{ uri: BASE_URL + img_link }} style={style.imageajouter} />
+            <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ photo }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
           </View>
-          <View  style={style.image}>
-            <Image source={{ uri: BASE_URL + img_couverture }} style={style.imageajouter} />
+          <View style={style.image}>
+            <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ couverture }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
           </View>
@@ -303,11 +303,11 @@ function PhotoModif() {
             { backgroundColor },
           ]}
         >
-        
+
           <View style={style.contenuerreurText}>
-          <Pressable onPress={closeModal} style={style.closemodale}>
-                  <Ionicons name="close-circle" size={30} color='white' />
-                </Pressable>
+            <Pressable onPress={closeModal} style={style.closemodale}>
+              <Ionicons name="close-circle" size={30} color='white' />
+            </Pressable>
             <Text style={style.modalText1}>{errorMessage1}</Text>
             <Text style={style.modalText2}>{errorMessage2}</Text>
           </View>
@@ -352,20 +352,15 @@ const style = StyleSheet.create({
     height: 550,
     backgroundColor: 'white',
     borderRadius: 15,
-    borderWidth: 0.5,
-    borderColor: 'lightgrey',
     display: 'flex',
     flexDirection: 'row',
-  // backgroundColor: 'lightgrey',
+    
   },
   imageContainer: {
     width: '100%',
-    //height: 150,
-    //marginTop: 10,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    //justifyContent:'space-betwen',
     flexWrap: 'wrap',
 
   },
@@ -373,8 +368,6 @@ const style = StyleSheet.create({
     width: '30%',
     height: 150,
     borderRadius: 15,
-  //  borderWidth: 1,
-    
     marginTop: 20,
     marginLeft: '2.5%',
   },
@@ -395,13 +388,13 @@ const style = StyleSheet.create({
   Title: {
     color: '#79328d',
     fontSize: 17,
-   // fontWeight: 'bold',
+    // fontWeight: 'bold',
     paddingBottom: 10,
     marginTop: 10,
   },
   Ajouter: {
     fontSize: 12,
-   // fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
   modalContent: {
     display: 'flex',
@@ -436,11 +429,11 @@ const style = StyleSheet.create({
     fontSize: 15,
   },
   closemodale: {
-position:'absolute',
+    position: 'absolute',
     alignSelf: 'flex-end',
- right:-35,
- top:-17
- 
+    right: -35,
+    top: -17
+
   },
   contenuerreurText: {
     width: 300,
@@ -454,9 +447,9 @@ position:'absolute',
     borderRadius: 100,
     right: 5,
     bottom: 5,
-    display:'flex',
-    justifyContent:'center',
-    alignItems:'center',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

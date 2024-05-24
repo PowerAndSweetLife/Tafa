@@ -24,15 +24,18 @@ const SkeletonProfile = () => {
     });
   return (
     <View  style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
-       <Animated.View
+      
+      <View style={styles.coverImage}>
+      <Animated.View
         style={[
           styles.Scroller,
-          { backgroundColor: 'white',width:'20%',  height: 800,
+          { backgroundColor: '#f2f2f2',width: '100%',
+          height: 200,
           zIndex:3, 
           position: 'absolute',transform: [{ translateX }] },
         ]}
       />
-      <View style={styles.coverImage}></View>
+      </View>
       <View style={styles.profileImage}></View>
       <View style={styles.name}></View>
       <View style={styles.description}></View>

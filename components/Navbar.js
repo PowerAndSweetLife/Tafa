@@ -25,8 +25,8 @@ const Navbar = () => {
   }, []);
 
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
-  const pseudo = Monprofil && Monprofil.Pseudo ? Monprofil.Pseudo : 'pseudo par défaut';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
+  const pseudo = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'pseudo par défaut';
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [previousNotificationCount, setPreviousNotificationCount] = useState(0);
@@ -73,7 +73,7 @@ const Navbar = () => {
     };
   
     fetchData();
-  }, [Monprofil.Id, previousNotificationCount, notificationsSeen]);
+  }, [Monprofil.id, previousNotificationCount, notificationsSeen]);
   
 
   const toggleModal = () => {
@@ -100,7 +100,7 @@ const Navbar = () => {
         // Mettre à jour localement les notifications comme lues
         for (const key in data) {
           if (data.hasOwnProperty(key)) {
-            if (data[key].visitedUserId === Monprofil.Id && !data[key].lu) {
+            if (data[key].visitedUserId === Monprofil.id && !data[key].lu) {
               data[key].lu = true;
             }
           }

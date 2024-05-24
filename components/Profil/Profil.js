@@ -6,12 +6,13 @@ import PhotoInterface from '../../components/PhotoInterface';
 import SkeletonItem from '../../components/skeleton/skeletonprofil';
 import { useRoute } from '@react-navigation/native';
 import { BASE_URL } from "../../helper/url";
+import { BASE_URL_IMAGE } from "../../helper/url";
 import defaultHommeAvatar from '../../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../../assets/Avatar/avatarfemme2.jpg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../context/usercontexttheme';
 import { useUser } from '../context/usercontext';
-import { BackHandler } from 'react-native';
+import { useBackHandler } from '@react-native-community/hooks'; 
 
 
 const Profil = () => {
@@ -19,14 +20,14 @@ const Profil = () => {
   const userData = route.params.userData;
   const navigation = useNavigation();
   const [currentInterface, setCurrentInterface] = useState("Profil");
-  const defaultAvatar = userData.Sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+  const defaultAvatar = userData.sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { isDarkMode } = useTheme();
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const onPressPhotos = () => {
 
-    setCurrentInterface("Photo", userData.Id);
+    setCurrentInterface("Photo", userData.id);
   };
 
 
@@ -49,7 +50,7 @@ const Profil = () => {
       }
 
       const blockedUsers = await blockedUsersResponse.json();
-      const selectedUserId = selectedUserData.Id;
+      const selectedUserId = selectedUserData.id;
       const currentUserBlockedIds = blockedUsers
         .filter(blockedUser => blockedUser.blocking_user_id === Id)
         .map(blockedUser => blockedUser.blocked_user_id);
@@ -78,8 +79,6 @@ const Profil = () => {
   };
   const [loading, setLoading] = useState(true);
 
-
-
   useEffect(() => {
     // Simuler un chargement de données pendant 3 secondes
     const timer = setTimeout(() => {
@@ -89,17 +88,10 @@ const Profil = () => {
     return () => clearTimeout(timer);
   }, []);
 
-
-  const handleBackPress = () => {
+  useBackHandler(() => {
     navigation.goBack(); // Revenir à l'écran précédent
     return true; // Indiquer que l'événement a été géré
-  };
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-    return () => {
-      backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
-    };
-  }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
+  });
 
   if (loading) {
     return <SkeletonItem />;
@@ -112,21 +104,21 @@ const Profil = () => {
       <View style={style.couverture}>
 
         <Image
-          source={userData.img_couverture ? { uri: BASE_URL + userData.img_couverture } : defaultAvatar}
+          source={userData.couverture ? { uri: BASE_URL_IMAGE + 'profile/'+userData.couverture } : defaultAvatar}
           style={[style.image1]}
         />
 
       </View>
       <View style={[style.profilcontenu, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}>
         <Pressable onPress={toggleModal}>
-          <Image source={userData.img_link ? { uri: BASE_URL + userData.img_link } : defaultAvatar}
+          <Image source={userData.photo ? { uri: BASE_URL_IMAGE + 'profile/'+userData.photo } : defaultAvatar}
             style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}></Image>
         </Pressable>
       </View>
       <View>
-        <Text style={[style.prenom, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.Nom}</Text>
+        <Text style={[style.prenom, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.firstname  }  {userData.pseudo}</Text>
         <Text style={[style.description, { fontFamily: 'objectif-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>
-          " L'amour n'est pas un sentiment, c'est une force, une vertu "
+          {userData.description}
         </Text>
       </View>
       <View style={style.apropos}>
@@ -178,7 +170,7 @@ const Profil = () => {
               </TouchableOpacity>
 
               <Image
-                source={userData.img_link ? { uri: BASE_URL + userData.img_link } : defaultAvatar}
+                source={userData.photo ? { uri: BASE_URL_IMAGE + userData.photo } : defaultAvatar}
                 style={style.modalImage}
               />
 
@@ -241,7 +233,7 @@ const style = StyleSheet.create({
     borderColor: 'white',
   },
   prenom: {
-    fontSize: 15,
+    fontSize: 18.5,
     paddingLeft: 12,
   },
   description: {

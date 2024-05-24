@@ -8,17 +8,20 @@ import { useNavigation } from '@react-navigation/native';
 import { SelectList } from 'react-native-dropdown-select-list'
 import * as Font from 'expo-font'
 import loadFonts from './loadFonts';
+import Modal from 'react-native-modal';
 
 
 
 
 function Register() {
-
+  const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
+  const [errorMessageModal, setErrorMessageModal] = useState("");
   useEffect(() => {
     const loadFonts = async () => {
       await Font.loadAsync({
         'modal-font': require('../assets/Fonts/Montserrat-Bold.ttf'),
         'custom-fontmessage': require('../assets/Fonts/Montserrat-Regular.ttf'),
+        'custom-fontmessageBold': require('../assets/Fonts/Montserrat-Bold.ttf')
       });
       setIsFontLoaded(true); // Mettre à jour l'état pour indiquer que la police est chargée
     };
@@ -31,18 +34,17 @@ function Register() {
   const [errorMessage, setErrorMessage] = useState("");
   const [errorMessagepseudo, setErrorMessagepseudo] = useState("");
   const [errorMessageemail, setErrorMessageemail] = useState("");
+   const [errorMessageAnnee,  setErrorMessageAnnee] = useState("");
   const [inputDate, setInputDate] = React.useState(undefined)
   const onPressCOnnexion = () => {
     navigation.navigate('COnnexion');
   };
-
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
   const toggleConfirmationVisibility = () => {
     setIsConfirmationVisible(!isCofirmationVisible);
   };
-
   const [inputValue1, setInputValue1] = useState('');
   const [inputValue2, setInputValue2] = useState('');
   const [inputValue3, setInputValue3] = useState('');
@@ -55,10 +57,7 @@ function Register() {
   const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
   const [inputValue10, setInputValue10] = useState('');
-
-
   const handleEnregistrement = async () => {
-    // Vérifier si un champ est vide
     if (
       !inputValue1 ||
       !inputValue2 ||
@@ -76,18 +75,43 @@ function Register() {
       setErrorMessage("Veuillez remplir tous les champs.");
       return; // Sortir de la fonction si un champ est vide
     }
+    
 
-    const dateNaissance = `${inputValueJour}/${inputValueMois}/${inputValueAnnee}`;
+  // Vérifier si inputValueAnnee est une année valide (nombre à 4 chiffres)
+  const isValidYear = /^\d{4}$/.test(inputValueAnnee);
+  if (!isValidYear) {
+    setErrorMessageAnnee("Veuillez entrer une année valide.");
+    return;
+  }
 
+  // Vérifier si l'année est dans la plage spécifiée (1950 à 2008)
+  const year = parseInt(inputValueAnnee, 10);
+  if (year < 1950 || year > 2008) {
+    setErrorMessageAnnee("Veuillez entrer une année exacte.");
+    return;
+  }
+
+
+    const age = new Date().getFullYear() - inputValueAnnee;
+    if (age < 18) {
+      setErrorMessageModal("Vous devez avoir plus de 18 ans pour vous  ");
+      setIsErrorModalVisible(true);
+      return;
+    }
+
+
+
+
+    const dateNaissance = `${inputValueAnnee}-${inputValueMois}-${inputValueJour}`;
     try {
       // Récupérer toutes les données utilisateurs
       const response = await fetch(BASE_URL + 'users');
       const userData = await response.json();
 
       // Vérifier si un utilisateur avec le même pseudo existe déjà
-      const userExistsWithPseudo = userData.some(user => user.Pseudo === inputValue3);
+      const userExistsWithPseudo = userData.some(user => user.pseudo === inputValue3);
       // Vérifier si un utilisateur avec le même email existe déjà
-      const userExistsWithEmail = userData.some(user => user.Email === inputValue4);
+      const userExistsWithEmail = userData.some(user => user.email === inputValue4);
 
       if (userExistsWithPseudo) {
         setErrorMessagepseudo("Ce pseudo est déjà utilisé par un autre utilisateur.");
@@ -105,17 +129,15 @@ function Register() {
             Nom: inputValue1,
             Prenom: inputValue2,
             Pseudo: inputValue3,
-            Ville: inputValue10,
             Email: inputValue4,
+            Ville: inputValue10,
             Sexe: inputValue5,
             Situation: inputValue6,
             Date_de_naissance: dateNaissance,
             Mots_de_passe: inputValue8,
-            Confirmation: inputValue9,
+            //Confirmation: inputValue9,
           }),
         });
-
-        console.log(JSON.stringify(res));
 
         if (inputValue8 !== inputValue9) {
           setErrorMessage('Les mots de passe ne correspondent pas.');
@@ -163,18 +185,18 @@ function Register() {
 
 
   const Mois = [
-    { key: '1', value: 'Janvier' },
-    { key: '2', value: 'Février' },
-    { key: '3', value: 'Mars' },
-    { key: '4', value: 'Avril' },
-    { key: '5', value: 'Mai' },
-    { key: '6', value: 'Juin' },
-    { key: '7', value: 'Juillet' },
-    { key: '8', value: 'Août' },
-    { key: '9', value: 'Septembre' },
-    { key: '10', value: 'Octobre' },
-    { key: '11', value: 'Novembre' },
-    { key: '12', value: 'Décembre' }
+    { key: '1', value: '01' },
+    { key: '2', value: '02' },
+    { key: '3', value: '03' },
+    { key: '4', value: '04' },
+    { key: '5', value: '05' },
+    { key: '6', value: '06' },
+    { key: '7', value: '07' },
+    { key: '8', value: '08' },
+    { key: '9', value: '09' },
+    { key: '10', value: '10' },
+    { key: '11', value: '11' },
+    { key: '12', value: '12' }
   ];
 
 
@@ -202,7 +224,6 @@ function Register() {
     setInputValueAnnee(année);
   }
 
-
   const logo = require('../assets/images/logo.png');
   return (
     <ScrollView>
@@ -214,12 +235,12 @@ function Register() {
           </View>
 
           <View style={{ margin: 10, top: 5 }}>
-            <Text  style={[style.textRegister,{ fontFamily: isFontLoaded ? 'modal-font' : null }]}>Inscription</Text>
+            <Text style={[style.textRegister, { fontFamily: isFontLoaded ? 'modal-font' : null }]}>Inscription</Text>
           </View>
 
           <View style={{ top: 10 }}>
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Nom :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Nom :</Text>
               <TextInput
                 placeholder="Nom "
                 style={style.TextInput}
@@ -230,7 +251,7 @@ function Register() {
 
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Prénom(s) :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Prénom(s) :</Text>
               <TextInput
                 placeholder="Prenom "
                 style={style.TextInput}
@@ -241,7 +262,7 @@ function Register() {
 
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Pseudo :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Pseudo :</Text>
               <TextInput
                 placeholder="Pseudo... "
                 style={[
@@ -255,7 +276,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Email :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Email :</Text>
               <TextInput
                 placeholder="email... "
                 style={[
@@ -270,7 +291,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Ville :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Ville :</Text>
               <TextInput
                 placeholder="Ville "
                 style={style.TextInput}
@@ -280,7 +301,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Sexe :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Sexe :</Text>
               <View style={style.InputSexe}>
                 <View style={style.datePickerItemSexe}>
                   <SelectList
@@ -302,7 +323,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Situation :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Situation :</Text>
               <View style={style.InputSituation}>
                 <View style={style.datePickerItemSituation}>
                   <SelectList
@@ -326,7 +347,7 @@ function Register() {
             </View>
 
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Date de naissance :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Date de naissance :</Text>
               <View style={style.ContenuDate}>
 
 
@@ -378,13 +399,14 @@ function Register() {
 
                   />
                 </View>
-
+                
               </View>
+              {errorMessageAnnee ? <Text style={style.error}>{errorMessageAnnee}</Text> : null}
             </View>
 
-
+        
             <View style={style.boxBody}>
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Mot de passe :</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Mot de passe :</Text>
               <View style={style.showpassword}>
                 <TextInput
                   placeholder="mot de passe... "
@@ -405,7 +427,7 @@ function Register() {
 
             <View style={style.boxBody}>
 
-              <Text style={[style.text,{ fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Confirmation:</Text>
+              <Text style={[style.text, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>Confirmation:</Text>
               <View style={style.showpassword}>
                 <TextInput
                   placeholder="Confirmation... "
@@ -447,6 +469,18 @@ function Register() {
             </TouchableOpacity>
           </View>
         </View>
+        <Modal isVisible={isErrorModalVisible}>
+          <View style={style.modalContainer}>
+            <Text style={[style.modalText, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>{errorMessageModal}</Text>
+            <View style={style.modalporteurText}>
+              <Text style={[style.modalText, { fontFamily: isFontLoaded ? 'custom-fontmessage' : null }]}>inscrire </Text>
+              <Text style={[style.Tafa, { fontFamily: isFontLoaded ? 'custom-fontmessageBold' : null }]}> Tafa</Text>
+            </View>
+            <TouchableOpacity onPress={() => setIsErrorModalVisible(false)}>
+              <Text style={style.modalButton}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </View>
     </ScrollView >
   );
@@ -457,11 +491,12 @@ const style = StyleSheet.create({
     height: 1000,
     backgroundColor: "white",
     borderColor: "black",
-    top: 10,
+    top: 100,
     borderRadius: 10,
     display: "flex",
     textAlign: "center",
     flexDirection: "column",
+    marginBottom:150
   },
   soouscontainer: {
     alignContent: "center",
@@ -495,9 +530,9 @@ const style = StyleSheet.create({
     top: 20,
     fontStyle: "normal",
     fontSize: 20,
-   // textDecorationLine: "underline",
+    // textDecorationLine: "underline",
     color: "#1c1c1e",
-    
+
   },
   showpassword: {
     height: 40,
@@ -652,7 +687,29 @@ const style = StyleSheet.create({
   errorInput: {
     borderColor: 'red', // Changer la couleur de la bordure en cas d'erreur
   },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 16,
+    //    marginBottom: 20,
+  },
+  Tafa: {
+    fontSize: 16,
+    color: '#f94990',
+  },
+  modalButton: {
+    fontSize: 16,
+    color: "blue",
+  },
+  modalporteurText: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: 20,
 
-
+  },
 });
 export default Register;

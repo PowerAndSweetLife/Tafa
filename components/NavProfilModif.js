@@ -14,7 +14,7 @@ function NavProfilModif() {
       navigation.goBack();
     };
       const onPressMessage = () => {
-        navigation.navigate("message");
+        navigation.navigate("message"); 
       };
   return (
     <View  style={[style.Navbar, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>

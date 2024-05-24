@@ -13,7 +13,7 @@ import { useTheme } from './context/usercontexttheme';
 
 const NavSearch = () => {
     const { Monprofil } = useUser();
-    const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+    const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
     const [inputValue, setInputValue] = useState('');
     const [recentSearches, setRecentSearches] = useState([]);
     const navigation = useNavigation();
@@ -27,7 +27,7 @@ const NavSearch = () => {
         const unsubscribe = onValue(dbRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                const filteredData = Object.values(data).filter(item => item.Id === Id);
+                const filteredData = Object.values(data).filter(item => item.id === Id);
                 setRecentSearches(filteredData);
     
                 // Récupérer toutes les clés des données

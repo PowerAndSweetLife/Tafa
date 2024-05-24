@@ -10,7 +10,7 @@ const SkeletonItem = () => {
     Animated.loop(
       Animated.timing(shimmerAnimation, {
         toValue: 1,
-        duration: 1450,
+        duration: 2000,
         useNativeDriver: true,
       })
     ).start();
@@ -18,15 +18,13 @@ const SkeletonItem = () => {
 
   const translateX = shimmerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-400, 400],
+    outputRange: [-270, 400],
   });
 
 
   return (
     
     <View style={styles.contenu}>
-
-
       <View style={styles.container}>
       <View style={styles.imageWrapper}>
           <Animated.View
@@ -36,12 +34,12 @@ const SkeletonItem = () => {
             ]}
           />
         </View>
-        <View style={styles.NomEtStatut}>
-          
+
+        <View style={styles.NomEtStatut}>          
           <View
             style={[
               styles.nom,
-              { backgroundColor: '#e0e0e0', height: 15, width: '70%' },
+              { backgroundColor: '#e0e0e0', height: 10, width: '60%' },
             ]}
           />
           <View
@@ -71,7 +69,7 @@ const SkeletonItem = () => {
           <View
             style={[
               styles.nom,
-              { backgroundColor: '#e0e0e0', height: 15, width: '70%' },
+              { backgroundColor: '#e0e0e0', height: 10, width: '60%' },
             ]}
           />
           <View
@@ -101,7 +99,7 @@ const SkeletonItem = () => {
           <View
             style={[
               styles.nom,
-              { backgroundColor: '#e0e0e0', height: 15, width: '70%' },
+              { backgroundColor: '#e0e0e0', height: 10, width: '60%' },
             ]}
           />
           <View
@@ -128,8 +126,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingTop: 15,
+    paddingTop: 5,
     paddingRight: 8,
+    marginTop:-8
   },
  
   container: {
@@ -155,6 +154,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop:-5
     
   },
   nom: {

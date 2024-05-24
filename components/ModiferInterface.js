@@ -13,7 +13,7 @@ function ModiferInterface() {
     loadFonts();
   }, []);
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const { isDarkMode } = useTheme();
   const [donnees, setDonnees] = useState([]);
 
@@ -31,7 +31,7 @@ function ModiferInterface() {
       .then(data => {
         // Filtrer les données pour ne pas inclure l'utilisateur connecté
         console.log('donnerfiltre ', Id);
-        const filteredData = data.filter(item => item.Id == Id);
+        const filteredData = data.filter(item => item.id == Id);
         setDonnees(filteredData);
         console.log('donnerfiltre ', filteredData);
 
@@ -43,11 +43,14 @@ function ModiferInterface() {
   }, []);
 
   const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) {
+        return null; // Ou une valeur par défaut appropriée si nécessaire
+    }
     const today = new Date();
-    const yearOfBirth = parseInt(dateOfBirth.split('/')[2]); // Récupérer l'année de naissance et la convertir en nombre entier
+    const yearOfBirth = parseInt(dateOfBirth.split('-')[0]);
     const age = today.getFullYear() - yearOfBirth;
     return age;
-  };
+};
   console.log('donner', donnees);
   console.log("Longueur de donnees :", donnees.length); 
   if (donnees.filter(item => Object.values(item).some(value => !value)).length > 0) {
@@ -58,10 +61,10 @@ function ModiferInterface() {
         <View style={style.Contenu}>
           {donnees.map((item, index) => (
             <View key={index}>
-              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Sexe}</Text>
-              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Situation}</Text>
-              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.Date_de_naissance)} ans</Text>
-              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.Ville}</Text>
+              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.sexe}</Text>
+              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.situation}</Text>
+              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.d_naissance)} ans</Text>
+              <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.v_natale}</Text>
 
             </View>
           ))}
@@ -99,11 +102,11 @@ function ModiferInterface() {
       <View style={style.Contenu}>
         {donnees.map((item, index) => (
           <View key={index}>
-            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Sexe}</Text>
-            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Situation}</Text>
-            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.Date_de_naissance)} ans</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.sexe}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.situation}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.d_naissance)} ans</Text>
 
-            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.Ville}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.v_natale}</Text>
             <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Objectif}</Text>
 
             <View>
@@ -152,8 +155,28 @@ function ModiferInterface() {
               <Text style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Alcool : {item.Alcool}</Text>
               <Text style={[style.Langue, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Cigarette : {item.Cigarette}</Text>
             </View>
+            
           </View>
-        ))}
+    
+    ))}
+          <View style={style.ContenuBtn1} >
+            <View style={style.Btn} >
+              <Pressable
+              onPress={onPressModifier}
+              //   onPress={onPressApropos}
+                style={({ pressed }) => [
+                  style.apropos0,
+               //     currentInterface === "Apropos",
+               {
+                backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
+                borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
+              },
+                ]}
+              >
+                <Text style={[style.TExtAproposPHoto,{ fontFamily: 'custom-fontmessage',color: isDarkMode ? 'white' : '#07668f' }]}>Modifier</Text>
+              </Pressable>
+            </View>
+          </View>
       </View>
     </View>
   );
@@ -229,9 +252,15 @@ const style = StyleSheet.create({
     alignItems: 'center',
     //marginTop: 10,
   },
+  ContenuBtn1: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    //marginTop: 10,
+  },
   apropos0: {
-    width: 150,
-    height: 30,
+    width: 120,
+    height: 22,
     display: "flex",
     justifyContent: 'center',
     alignItems: 'center',
@@ -240,6 +269,9 @@ const style = StyleSheet.create({
     backgroundColor: "grey",
     //left: -4,
     borderWidth: 1,
+  },
+  TExtAproposPHoto: {
+    fontSize: 12,
   },
 });
 

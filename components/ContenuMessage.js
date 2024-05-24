@@ -1,33 +1,36 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, View, Text, ScrollView, Image, Modal, TouchableOpacity, Pressable, Keyboard } from "react-native";
+import { View, Text, ScrollView, Image, Modal, TouchableOpacity, Pressable, Keyboard, StyleSheet } from "react-native";
 import { useUser } from './context/usercontext';
 import { useRoute } from '@react-navigation/native';
-import { getDatabase, ref, onValue } from 'firebase/database';
 import { useTheme } from './context/usercontexttheme';
-import { BASE_URL } from "../helper/url";
+import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Font from 'expo-font';
 
 const ContenuMessage = () => {
-    const scrollViewRef = useRef();
-    const [messages, setMessages] = useState([]);
-    const { Monprofil } = useUser();
-    const route = useRoute();
-    const { isDarkMode } = useTheme();
-    const userData = route.params.userData;
-    const Idenvoyermes = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
-    const Id = userData && userData.Id ? userData.Id : 'defaultUserId';
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadingProgress, setLoadingProgress] = useState(0);
-    const [donnees, setDonnees] = useState([]);
-    const [Nomenvoyermes, setNomenvoyermes] = useState('');
-    const [Idrecusmes, setIdRecusmes] = useState('');
-    const [Images, setImages] = useState('');
-    const [Imagesenvoyermes, setImagesenvoyermes] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const toggleModal = () => {
+    const scrollViewRef = useRef(); // Référence pour scroller automatiquement au dernier message
+    const [messages, setMessages] = useState([]); // État pour stocker les messages
+    const { Monprofil } = useUser(); // Utilisation du contexte utilisateur
+    const route = useRoute(); // Utilisation du hook de navigation pour obtenir les paramètres de la route
+    const { isDarkMode } = useTheme(); // Utilisation du contexte thème pour le mode sombre
+    const userData = route.params.userData; // Données de l'utilisateur passées via la route
+    const Idenvoyermes = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId'; // ID de l'utilisateur courant
+    const Id = userData && userData.id ? userData.id : 'defaultUserId'; // ID de l'utilisateur de la conversation
+    const [isLoading, setIsLoading] = useState(false); // État de chargement des images
+    const [loadingProgress, setLoadingProgress] = useState(0); // État de progression de chargement des images
+    const [Nomenvoyermes, setNomenvoyermes] = useState(''); // Nom de l'utilisateur courant
+    const [Idrecusmes, setIdRecusmes] = useState(''); // ID du destinataire du message
+    const [Imagesenvoyermes, setImagesenvoyermes] = useState(''); // Image de profil de l'utilisateur courant
+    const [isModalOpen, setIsModalOpen] = useState(false); // État de la modal d'image
+    const [modalImage, setModalImage] = useState(''); // Image affichée dans la modal
+
+    // Fonction pour ouvrir et fermer la modal d'image
+    const toggleModal = (image) => {
+        setModalImage(image);
         setIsModalOpen(!isModalOpen);
     };
+
+    // Fonction pour charger les polices personnalisées
     const loadFonts = async () => {
         await Font.loadAsync({
             'custom-font': require('../assets/Fonts/Lato-Bold.ttf'),
@@ -35,61 +38,48 @@ const ContenuMessage = () => {
         });
     };
 
+    // Chargement des polices au montage du composant
     useEffect(() => {
         loadFonts();
     }, []);
+
+    // Chargement des messages depuis l'API
     useEffect(() => {
-
-
-        const fetchData = async () => {
+        const fetchMessages = async () => {
             try {
-                const db = getDatabase();
-                const visitesRef = ref(db, 'Messages');
-
-                onValue(visitesRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        const messagesData = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
-
-                        // Filtrer les messages associés à Idvisited et les réponses associées à Id
-                        const filteredMessages = messagesData.filter(message => {
-                            if (message.Idenvoyermes === Idenvoyermes && message.Idrecusmes === Id) {
-                                setImages(message.Images);
-                                return true; // Si les IDs correspondent, c'est un message
-                            } else if (message.Idenvoyermes === Id && message.Idrecusmes === Idenvoyermes) {
-                                setNomenvoyermes(message.Nomenvoyermes);
-
-                                setIdRecusmes(message.Idrecusmes);
-                                setImagesenvoyermes(message.profilenvoyermes);
-
-                                return true; // Si les IDs inversés correspondent, c'est une réponse
-                            } else {
-                                return false; // Autrement, ne pas inclure
-                            }
-                        });
-                        console.log('sary', Images);
-                        setMessages(filteredMessages);
-                        // Scroll automatiquement jusqu'au dernier message
-                        if (scrollViewRef.current) {
-                            scrollViewRef.current.scrollToEnd({ animated: true });
-                        }
-                    } else {
-                        console.log('Aucune donnée de visite trouvée.');
+                const response = await fetch(`${BASE_URL}/messenger/getDiscussion?page=0&pseudo=${userData.pseudo}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
                 });
+                const result = await response.json();
+                if (result.messages) {
+                    setMessages(result.messages);
+                    setNomenvoyermes(result.friend.pseudo);
+                    setIdRecusmes(result.friend.id);
+                    setImagesenvoyermes(result.friend.photo);
+
+                    // Scroll automatique jusqu'au dernier message
+                    if (scrollViewRef.current) {
+                        scrollViewRef.current.scrollToEnd({ animated: true });
+                    }
+                }
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('Error fetching messages:', error);
             }
         };
 
-        fetchData();
-    }, [Idenvoyermes]); // Exécuter l'effet uniquement lorsque Idvisited change
+        fetchMessages();
+    }, [Idenvoyermes, userData.pseudo]);
+
+    // Fonction pour calculer la différence de temps entre maintenant et le timestamp du message
     const calculateTimeDifference = (timestamp) => {
         const currentTime = Date.now();
         const messageTime = new Date(timestamp).getTime();
         const timeDiff = currentTime - messageTime;
         const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-        
+
         if (minutesDiff < 1) {
             return "à l'instant";
         } else if (minutesDiff < 60) {
@@ -102,7 +92,7 @@ const ContenuMessage = () => {
             return `${daysDiff} jour${daysDiff > 1 ? 's' : ''}`;
         }
     };
-    
+
     // Gestionnaire d'événement pour détecter la fermeture du clavier
     useEffect(() => {
         const keyboardDidHideListener = Keyboard.addListener(
@@ -121,51 +111,55 @@ const ContenuMessage = () => {
 
     return (
         <ScrollView ref={scrollViewRef}>
-            <View style={[style.contenumessage, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
+            <View style={style.contenumessage}>
+                {/* En-tête de la conversation avec le profil de l'utilisateur */}
                 <View style={style.profil}>
                     <View style={style.porteurimage}>
                         <Image
-                            source={{ uri: Imagesenvoyermes ? BASE_URL + Imagesenvoyermes : (userData.img_link ? BASE_URL + userData.img_link : '') }}
+                            source={{ uri: Imagesenvoyermes ? BASE_URL_IMAGE + Imagesenvoyermes : (userData.photo ? BASE_URL_IMAGE + 'profile/' + userData.photo : 'default') }}
                             style={style.image}
                         />
                     </View>
                     <View style={style.porteurNom}>
-                        <Text style={{ fontFamily: 'custom-font',fontSize: 25, fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
-                            {Nomenvoyermes || userData.Nom}
+                        <Text style={{ ...style.porteurText, fontFamily: 'custom-font', fontSize: 25, fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                            {Nomenvoyermes || userData.pseudo}
                         </Text>
                     </View>
                     <View style={style.porteurText}>
-                        <Text style={{ fontFamily: 'custom-font', fontSize: 20, fontWeight: 'bold', marginRight: 10, color: isDarkMode ? '#f94990' : '#f94990' }} >Tafa</Text>
-                        <Text style={{ fontFamily: 'custom-fontmessage', fontSize: 15, fontWeight: 'light', marginRight: 10, color: isDarkMode ? '#ffffff' : '#000000' }} >Permet de Vous Rencontrer</Text>
+                        <Text style={{ ...style.porteurText, fontFamily: 'custom-font', fontSize: 20, fontWeight: 'bold', marginRight: 10, color: isDarkMode ? '#f94990' : '#f94990' }} >Tafa</Text>
+                        <Text style={{ ...style.porteurText, fontFamily: 'custom-fontmessage', fontSize: 15, fontWeight: 'light', marginRight: 10, color: isDarkMode ? '#ffffff' : '#000000' }} >Permet de Vous Rencontrer</Text>
                     </View>
                 </View>
+
+                {/* Affichage des messages */}
                 {messages.map((message, index) => (
-                    <View key={index} >
-                        {message.Idenvoyermes === Idenvoyermes ? (
+                    <View key={index}>
+                        {/* Si l'utilisateur courant est l'expéditeur */}
+                        {message.sender === Idenvoyermes ? (
                             <View style={style.Container}>
-                                {message.inputValue && !message.Images && (
-                                    <View style={[
-                                        style.messages,
-                                        {
-                                            backgroundColor: isDarkMode ? '#81a9e7' : '#0084ff',
-                                            width: message.inputValue.length < 10 ? '25%' :
-                                                message.inputValue.length < 15 ? '25%' :
-                                                    message.inputValue.length < 20 ? '30%' :
-                                                        message.inputValue.length < 30 ? '40%' :
-                                                            message.inputValue.length < 40 ? '50%' :
-                                                                message.inputValue.length < 50 ? '60%' :
-                                                                    message.inputValue.length < 60 ? '70%' :
-                                                                        message.inputValue.length < 60 ? '70%' : '70%'
-                                        }
-                                    ]}>
-                                        <Text style={[style.messagesTExt, { fontFamily: 'custom-fontmessage', color: isDarkMode ? '#000000' : '#ffffff' }]}> {message.inputValue}</Text>
+                                {/* Affichage du texte du message */}
+                                {message.contenuMessage && !message.pieceJointe && (
+                                    <View style={{
+                                        ...style.messages,
+                                        backgroundColor: isDarkMode ? '#81a9e7' : '#0084ff',
+                                        width: message.contenuMessage.length < 10 ? '25%' :
+                                            message.contenuMessage.length < 15 ? '25%' :
+                                                message.contenuMessage.length < 20 ? '30%' :
+                                                    message.contenuMessage.length < 30 ? '40%' :
+                                                        message.contenuMessage.length < 40 ? '50%' :
+                                                            message.contenuMessage.length < 50 ? '60%' :
+                                                                message.contenuMessage.length < 60 ? '70%' :
+                                                                    '70%'
+                                    }}>
+                                        <Text style={{ ...style.messagesTExt, color: isDarkMode ? '#000000' : '#ffffff' }}> {message.contenuMessage}</Text>
                                     </View>
                                 )}
-                                {message.Images && !message.inputValue && (
+                                {/* Affichage de l'image envoyée */}
+                                {message.pieceJointe && !message.contenuMessage && (
                                     <View style={style.Contenuimages}>
-                                        <Pressable onPress={toggleModal}>
+                                        <Pressable onPress={() => toggleModal(message.pieceJointe)}>
                                             <Image
-                                                source={{ uri: BASE_URL + message.Images }}
+                                                source={{ uri: BASE_URL_IMAGE + 'message/' + message.pieceJointe }}
                                                 style={style.images}
                                                 onLoadStart={() => setIsLoading(true)}
                                                 onLoadEnd={() => setIsLoading(false)}
@@ -174,10 +168,17 @@ const ContenuMessage = () => {
                                         </Pressable>
                                     </View>
                                 )}
-                                <Text style={[style.time1, {fontFamily: 'custom-fontmessage', color: 'grey' }]}>{calculateTimeDifference(message.timestamp)}</Text>
+                                {/* Affichage de l'emoji envoyé */}
+                                {message.emoji && !message.contenuMessage && (
+                                    <View style={style.Contenuemojierepons}>
+                                        <Text style={{ fontSize: 30 }}>{message.emoji}</Text>
+                                    </View>
+                                )}
+                                {/* Affichage de l'heure d'envoi du message */}
+                                <Text style={style.time1}>{calculateTimeDifference(message.dateSent)}</Text>
                             </View>
                         ) : (
-                            <View style={style.reponseContainer}>
+                            < View style={style.reponseContainer}>///* Si l'utilisateur courant est le destinataire */
                                 <View style={style.porteurimagereponse}>
                                     <Image
                                         source={{ uri: BASE_URL + Imagesenvoyermes }}
@@ -185,41 +186,49 @@ const ContenuMessage = () => {
                                     />
                                 </View>
                                 <View style={style.reponsesousContainer}>
-                                    {message.inputValue && !message.Images && (
-                                        <View style={[
-                                            style.Repons,
-                                            {
-                                                backgroundColor: isDarkMode ? '#3c4043' : '#e7e8ea',
-                                                width: message.inputValue.length < 10 ? '25%' :
-                                                    message.inputValue.length < 15 ? '25%' :
-                                                        message.inputValue.length < 20 ? '30%' :
-                                                            message.inputValue.length < 30 ? '40%' :
-                                                                message.inputValue.length < 40 ? '50%' :
-                                                                    message.inputValue.length < 50 ? '60%' :
-                                                                        message.inputValue.length < 60 ? '70%' :
-                                                                            message.inputValue.length < 60 ? '70%' : '70%'
-                                            }
-                                        ]}>
-                                            <Text style={[style.ReponsTExt, { fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : '#000000' }]}> {message.inputValue}</Text>
+                                    {/* Affichage du texte du message reçu */}
+                                    {message.contenuMessage && !message.pieceJointe && (
+                                        <View style={{
+                                            ...style.Repons,
+                                            backgroundColor: isDarkMode ? '#3c4043' : '#e7e8ea',
+                                            width: message.contenuMessage.length < 10 ? '25%' :
+                                                message.contenuMessage.length < 15 ? '25%' :
+                                                    message.contenuMessage.length < 20 ? '30%' :
+                                                        message.contenuMessage.length < 30 ? '40%' :
+                                                            message.contenuMessage.length < 40 ? '50%' :
+                                                                message.contenuMessage.length < 50 ? '60%' :
+                                                                    message.contenuMessage.length < 60 ? '70%' :
+                                                                        '70%'
+                                        }}>
+                                            <Text style={{ ...style.ReponsTExt, color: isDarkMode ? '#ffffff' : '#000000' }}> {message.contenuMessage}</Text>
                                         </View>
                                     )}
-                                    {message.Images && !message.inputValue && (
+                                    {/* Affichage de l'image reçue */}
+                                    {message.pieceJointe && !message.contenuMessage && (
                                         <View style={style.Contenuimagesrepons}>
-                                            <Pressable onPress={toggleModal}>
+                                            <Pressable onPress={() => toggleModal(message.pieceJointe)}>
                                                 <Image
-                                                    source={{ uri: BASE_URL + message.Images }}
+                                                    source={{ uri: BASE_URL_IMAGE + 'message/' + message.pieceJointe }}
                                                     style={style.images}
                                                 />
                                             </Pressable>
                                         </View>
                                     )}
-                                    <Text style={[style.time2,{ fontFamily: 'custom-fontmessage',}]}>{calculateTimeDifference(message.timestamp)}</Text>
+                                    {/* Affichage de l'emoji reçu */}
+                                    {message.emoji && !message.contenuMessage && (
+                                        <View style={style.Contenuemojierepons}>
+                                            <Text style={{ fontSize: 30 }}>{message.emoji}</Text>
+                                        </View>
+                                    )}
+                                    {/* Affichage de l'heure de réception du message */}
+                                    <Text style={style.time2}>{calculateTimeDifference(message.dateSent)}</Text>
                                 </View>
                             </View>
                         )}
                     </View>
                 ))}
-                <Modal visible={isModalOpen} transparent={true} animationType="fade"   >
+                {/* Modal pour afficher les images en plein écran */}
+                <Modal visible={isModalOpen} transparent={true} animationType="fade">
                     <View style={style.Modal}>
                         <View style={style.modalContainer}>
                             <View style={style.modalContainerImage}>
@@ -227,7 +236,7 @@ const ContenuMessage = () => {
                                     <Ionicons name="close" size={30} color='#f94990' />
                                 </TouchableOpacity>
                                 <Image
-                                    source={{ uri: BASE_URL + Images }}
+                                    source={{ uri: BASE_URL + modalImage }}
                                     style={style.modalImage}
                                 />
                             </View>
@@ -235,175 +244,120 @@ const ContenuMessage = () => {
                     </View>
                 </Modal>
             </View>
-        </ScrollView>
+        </ScrollView >
     );
 };
 
 const style = StyleSheet.create({
     contenumessage: {
-        paddingTop: 10,
-        width: '100%',
-        height: '100%',
-        paddingBottom: 100,
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    Container: {
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        alignItems: 'flex-end',
-        paddingRight: '3%',
-    },
-    messages: {
-        borderTopRightRadius: 20,
-        borderTopLeftRadius: 20,
-        borderBottomLeftRadius: 20,
-        padding: 10,
-        marginTop: 20,
-        backgroundColor: '#0084ff',
-    },
-    reponseContainer: {
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        paddingLeft: 10,
-    },
-    reponsesousContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        alignItems: 'flex-start',
-    },
-    Repons: {
-        borderTopRightRadius: 20,
-        borderTopLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        padding: 10,
-        backgroundColor: '#e7e8ea',
-        marginTop: 10,
-    },
-    ReponsTExt: {
-        color: 'black',
-        fontSize: 14,
-    },
-    messagesTExt: {
-        color: 'white',
-        fontSize: 14,
-    },
-    time1: {
-        fontSize: 10,
-        textAlign: 'right',
-    },
-    time2: {
-        color: 'grey',
-        fontSize: 10,
-        textAlign: 'right',
-    },
-    Contenuimages: {
-        width: '50%',
-        height: 230,
-        borderRadius: 15,
-        marginTop: 20,
-        borderColor: '#0084ff',
-    },
-    Contenuimagesrepons: {
-        width: '50%',
-        height: 230,
-        borderRadius: 20,
-        marginTop: 20,
-        borderColor: '#e7e8ea',
-    },
-    images: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 15,
-    },
-    loadingContainer: {
-        position: 'absolute',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        flex: 1,
+        padding: 10
     },
     profil: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
+        flexDirection: 'row',
         alignItems: 'center',
-        width: '100%',
-        height: 200,
+        marginBottom: 10
     },
     porteurimage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        borderColor: 'grey',
-    },
-    porteurimagereponse: {
-        width: 35,
-        height: 'auto',
-        justifyContent: 'flex-end',
-        paddingBottom: 8,
-    },
-    imagereponse: {
-        width: 30,
-        height: 30,
-        borderRadius: 50,
+        marginRight: 10
     },
     image: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 50,
+        height: 50,
+        borderRadius: 25
     },
     porteurNom: {
-        width: 300,
-        height: 30,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        flex: 1
     },
     porteurText: {
-        width: 300,
-        height: 30,
-        display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    Container: {
+        alignItems: 'flex-end',
+        marginBottom: 10
+    },
+    messages: {
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 5
+    },
+    messagesTExt: {
+        fontSize: 16
+    },
+    Contenuimages: {
+        marginBottom: 5
+    },
+    images: {
+        width: 200,
+        height: 200,
+        borderRadius: 10
+    },
+    Contenuemojierepons: {
+        marginBottom: 5
+    },
+    time1: {
+        fontSize: 12,
+        textAlign: 'right'
+    },
+    reponseContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 10
+    },
+    porteurimagereponse: {
+        marginRight: 10
+    },
+    imagereponse: {
+        width: 50,
+        height: 50,
+        borderRadius: 25
+    },
+    reponsesousContainer: {
+        flex: 1
+    },
+    Repons: {
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 5
+    },
+    ReponsTExt: {
+        fontSize: 16
+    },
+    Contenuimagesrepons: {
+        marginBottom: 5
+    },
+    time2: {
+        fontSize: 12
+    },
+    Modal: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     modalContainer: {
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: '90%',
+        height: '90%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        borderRadius: 10
     },
     modalContainerImage: {
-        width: '95%',
-        height: '70%',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    modalclose: {
+        position: 'absolute',
+        top: 20,
+        right: 20
     },
     modalImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 10,
-        zIndex: 1,
-    },
-    modalclose: {
-        backgroundColor: 'white',
-        width: 30,
-        height: 30,
-        position: 'absolute',
-        right: -10,
-        top: -15,
-        borderRadius: 50,
-        zIndex: 5,
-    },
-    Modal: {
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        width: '100%',
-        height: "100%"
-    },
+        resizeMode: 'contain'
+    }
 });
 
 export default ContenuMessage;
+
+

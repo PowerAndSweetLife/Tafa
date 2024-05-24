@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Animated } from 'react-native';
 import { useEffect, useRef,useUser } from 'react';
-
 import { useTheme } from '../context/usercontexttheme';
+
 
 const SkeletonItem = () => {
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
@@ -24,14 +24,7 @@ const SkeletonItem = () => {
 
   return (
     <View style={[styles.contenu, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]} >
-      <Animated.View
-        style={[
-          styles.Scroller,
-          { backgroundColor: 'white',width:'7%',  height: 100,
-          zIndex:3, 
-          position: 'absolute',transform: [{ translateX }] },
-        ]}
-      />
+    
       <View style={styles.ContenuProfil}>
       
         <View
@@ -47,11 +40,18 @@ const SkeletonItem = () => {
       <View style={styles.ContenuNom}>
         <View style={styles.nomContainer}>
           <View
-            style={[
-              styles.nom,
-              { backgroundColor: '#e0e0e0', width: '70%' },
-            ]}
-          />
+            style={[styles.nom]}
+          >
+  <Animated.View
+        style={[
+          styles.Scroller,
+          { backgroundColor: isDarkMode ? '#000000' : '#ffffff',width:'70%',  height: 15,
+          zIndex:3, 
+          position: 'absolute',transform: [{ translateX }] },
+        ]}
+      />
+
+         </View>   
         </View>
         <View style={styles.messageContainer}>
           <View
@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
   nom: {
     height: 15,
     borderRadius: 5,
+    backgroundColor: '#e0e0e0', width: '70%' 
   },
   messageContainer: {
     height: 45,

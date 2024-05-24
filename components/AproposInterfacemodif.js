@@ -17,7 +17,7 @@ function AproposInterfacemodif() {
   const [showInput, setShowInput] = useState(false);
   const [showInputLangue, setShowInputLangue] = useState(false);
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const handlePressplusLangue = () => {
     setShowInputLangue(true);
   };
@@ -238,7 +238,7 @@ function AproposInterfacemodif() {
         .then(response => response.json())
         .then(data => {
             // Filtrer les données pour ne pas inclure l'utilisateur connecté
-            const filteredData = data.filter(item => item.Id == Id);
+            const filteredData = data.filter(item => item.id == Id);
             setDonnees(filteredData);
             console.log('res=cus', donnees);
         })
@@ -258,15 +258,15 @@ function AproposInterfacemodif() {
 <View style={style.profil}>
       {donnees.map(item => (
         <View key={item.Id} style={style.profil}>
-          <View style={style.porteurimage} key={item.Id}>
+          <View style={style.porteurimage} key={item.id}>
             <Image
-              source={item.img_link ? { uri: BASE_URL + item.img_link } : defaultAvatar(item.Sexe)}
+              source={item.photo ? { uri: BASE_URL + item.photo } : defaultAvatar(item.sexe)}
               style={style.image}
             />
           </View>
           <View style={style.porteurNom}>
             <Text style={{ fontFamily: 'custom-font', fontSize: 25, fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
-              {item.Nom}, {item.Prenom}
+              {item.pseudo}, {item.firstname}
             </Text>
           </View>
           <View style={style.porteurText}>

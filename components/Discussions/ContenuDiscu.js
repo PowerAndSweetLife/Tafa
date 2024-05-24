@@ -15,11 +15,11 @@ const ContenuDiscu = () => {
   const { isDarkMode } = useTheme();
   const navigation = useNavigation();
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const [donnees, setDonnees] = useState([]);
   const [Idvisited, setIdVisited] = useState(null);
   const [userData, setUserData] = useState([]);
-
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
 
   const handleBackPress = () => {
     navigation.goBack(); // Revenir à l'écran précédent
@@ -41,7 +41,8 @@ useEffect(() => {
   const loadFonts = async () => {
     await Font.loadAsync({
       'custom-font': require('../../assets/Fonts/Lato-Bold.ttf'),
-      'custom-fontmessage': require('../../assets/Fonts/Montserrat-Regular.ttf')
+      'custom-fontmessage': require('../../assets/Fonts/Montserrat-Regular.ttf'),
+      'custom-fontmessageBold': require('../../assets/Fonts/Montserrat-Bold.ttf')
     });
   };
   
@@ -82,7 +83,9 @@ useEffect(() => {
             );
 
             setIdVisited(Idvisited);
+            
             setDonnees(filteredMessages);
+            
           } else {
             console.log('Aucune donnée de visite trouvée.');
           }
@@ -95,35 +98,61 @@ useEffect(() => {
     fetchData();
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     const fetchUserData = async () => {
+      
       if (Idvisited !== null && Idvisited.length > 0) {
-        try {
-          const userDataArray = [];
-          for (const id of Idvisited) {
-            const response = await fetch(BASE_URL + 'users');
-            const userData = await response.json();
 
-            const filteredData = userData.filter(user => user.Id === id);
-            userDataArray.push(filteredData[0]); // On ajoute le premier utilisateur filtré au tableau
+        try {
+          const response = await fetch(BASE_URL + 'usersdiscu', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: Idvisited[0] }),
+          });
+        
+          if (!response.ok) {
+            throw new Error('Erreur HTTP, statut : ' + response.status);
           }
-          setUserData(userDataArray);
+        
+          const data = await response.json();
+          console.log('Data from API:', data);
+        
+          if (data && Array.isArray(data.results)) {
+            const filteredData = data.results.filter(user => user.id === Idvisited[0]);
+            if (filteredData.length > 0) {
+              const userDataArray = [filteredData[0]];
+              setUserData(userDataArray);
+              
+            } else {
+              console.error('Aucun utilisateur correspondant trouvé.');
+            }
+          } else {
+            console.error('La réponse de l\'API n\'est pas un tableau attendu:', data);
+          }
+        
           setLoading(false);
         } catch (error) {
-          console.error('Erreur lors de la récupération des données utilisateur:', error);
-          setLoading(false);
+          console.error('Erreur lors de la récupération des données:', error);
+          setError(error); // Définition de l'erreur dans le state
         }
+        
+        
       } else {
         console.log("Aucun ID visité à rechercher.");
       }
     };
 
+
+    
     fetchUserData();
   }, [Idvisited]);
 
+ 
   const onPressMessages = async (selectedUserData, messageId) => {
     try {
-      
+      console.log('selectedUserData:', selectedUserData); 
       // Récupération de tous les messages à partir de la base de données Firebase
       const db = getDatabase();
       const visitesRef = ref(db, 'Messages');
@@ -147,13 +176,13 @@ useEffect(() => {
       }
       
       const blockedUsers = await blockedUsersResponse.json();
-      const selectedUserId = selectedUserData.Id;
+      const selectedUserId = selectedUserData.id;
       const currentUserBlockedIds = blockedUsers
         .filter(blockedUser => blockedUser.blocking_user_id === Id)
         .map(blockedUser => blockedUser.blocked_user_id);
 
       const isBlocked = currentUserBlockedIds.includes(selectedUserId);
-      
+     
       navigation.navigate('Messages', {
         userData: selectedUserData,
         showFooterMessage: !isBlocked // Show footer message only if not blocked
@@ -189,13 +218,14 @@ useEffect(() => {
             const profil = item.Idrecusmes === Id ? item.profilenvoyermes : item.profilrecumes;
             const isUnread = !item.lu;
             const isCurrentRecipient = item.Idrecusmes === Id;
+            const selectedUserData = userData[index];
             return (
               <Pressable style={styles.Icon} onPress={() => onPressMessages(userData[index], item.id)} key={index}>
                 <View style={[styles.Contenu, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
                   <View style={styles.ContenuProfil}>
-                    <Image source={{ uri: BASE_URL + profil }} style={styles.images} />
+                    <Image source={{ uri: BASE_URL +'assets/Images/profile/'+  profil }} style={styles.images} />
                     <View style={styles.statutContainer}>
-                    {item.enLigne === 'true' ? (
+                    {item.status === 1 ? (
                 <View style={styles.statutEnLigne}></View>
               ) : (
                 <View style={styles.statutHorsLigne}></View>
@@ -211,11 +241,14 @@ useEffect(() => {
                     <View style={styles.ContenuMessage}>
                       {item.inputValue ? ( // Vérifiez si inputValue est défini
                         <Text style={[styles.MESSAGES, { fontFamily: 'custom-fontmessage',color: isDarkMode ? '#ffffff' : 'gray' }]} numberOfLines={1} ellipsizeMode="tail">
-                          {item.lu || !isCurrentRecipient ? item.inputValue : <Text style={{ fontWeight: 'bold' }}>{item.inputValue}</Text>}
+                          {item.lu || !isCurrentRecipient ? item.inputValue : <Text style={{fontFamily: 'custom-fontmessageBold'  } }>{item.inputValue}</Text>}
                         </Text>
                       ) : item.Images ? ( // Si inputValue est vide mais Images est défini
                         <Text style={[styles.MESSAGES, {fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : 'gray' }]}>{nom2}  envoyé une photo</Text>
-                      ) : null}
+                      ): item.emoji ? ( // Si inputValue est vide mais Images est défini
+                      <Text style={[styles.MESSAGES, {fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : 'gray' }]}>{nom2}  envoyé {item.emoji}</Text>
+                    ) : null}
+                    
                     </View>
                   </View>
                 </View>

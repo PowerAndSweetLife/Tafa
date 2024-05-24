@@ -82,7 +82,7 @@ const ContenuLogin = () => {
                         setResetSuccess(true);
                         setEmail('');
                         setPassword('');
-                    }, 8000);
+                    }, 10000);
                     const { user } = result;
                     setMonprofil(user);
                     setuserId(user.Id);
@@ -113,7 +113,7 @@ const ContenuLogin = () => {
                 },
                 body: JSON.stringify({
                     userId: userId,
-                    enLigne: "true",
+                    enLigne: 1,
                 }),
             });
 

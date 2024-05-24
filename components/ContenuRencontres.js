@@ -1,6 +1,6 @@
 import { TouchableOpacity, StyleSheet, Text, View, Image, Pressable, Animated, Modal, ScrollView } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
-import { BASE_URL } from "../helper/url";
+import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Swiper from 'react-native-deck-swiper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,33 +20,35 @@ import { BackHandler } from 'react-native';
 
 
 
-
 const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) {
+        return null; // Ou une valeur par défaut appropriée si nécessaire
+    }
     const today = new Date();
-    const yearOfBirth = parseInt(dateOfBirth.split('/')[2]);
+    const yearOfBirth = parseInt(dateOfBirth.split('-')[0]);
     const age = today.getFullYear() - yearOfBirth;
     return age;
 };
 
 const defaultAvatar = (sexe) => {
-    return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+    return sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
 };
 
 const ContenuRencontres = () => {
-
-    useEffect(() => {
+ 
+      useEffect(() => {
         loadFonts();
-    }, []);
-
+      }, []);
+     
     const { Monprofil } = useUser();
-    const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+    const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [showMatchModal, setShowMatchModal] = useState(false);
-    const [nom, setLikedUserName] = useState('');
+    const [pseudo, setLikedUserName] = useState('');
     const shimmerAnimation = useRef(new Animated.Value(0)).current;
     const [showFloatingHearts, setShowFloatingHearts] = useState(true);
     const [blockedUsers, setBlockedUsers] = useState([]);
@@ -59,7 +61,7 @@ const ContenuRencontres = () => {
             })
         ).start();
     }, []);
-
+   
     const handleBackPress = () => {
         navigation.goBack(); // Revenir à l'écran précédent
         return true; // Indiquer que l'événement a été géré
@@ -74,47 +76,6 @@ const ContenuRencontres = () => {
     }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
 
 
-    const database = getDatabase();
-
-    const swipeLeft = () => {
-        swiperRef.swipeLeft();
-    };
-
-    const swipeRight = () => {
-        swiperRef.swipeRight();
-    };
-
-    const insererDislike = (dilikerId, dislikedUserId, dislikedUser) => {
-        try {
-            const newDataRef = push(ref(database, 'dislikes'));
-            set(newDataRef, {
-                dislikerId: dilikerId,
-                dislikedUserId: dislikedUserId,
-                dislikedUserProfile: dislikedUser
-            });
-        } catch (error) {
-            console.error('Erreur lors de l\'insertion des données:', error);
-        }
-    };
-    const onSwipedLeft = (index) => {
-        const swipedUser = cards[index];
-        console.log('Swiped left:', swipedUser);
-        insererDislike(Id, swipedUser.Id, swipedUser);
-    };
-
-    const insererDonnees = (likerId, likedUserId, likedUser) => {
-        try {
-            const newDataRef = push(ref(database, 'likes'));
-            set(newDataRef, {
-                likerId: likerId,
-                likedUserId: likedUserId,
-                likedUserProfile: likedUser
-            });
-        } catch (error) {
-            console.error('Erreur lors de l\'insertion des données liké:', error);
-        }
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -126,57 +87,41 @@ const ContenuRencontres = () => {
                 setBlockedUsers(blockedUsersData);
                 console.log('Blocked Users:', blockedUsersData); // Vérifier les utilisateurs bloqués
 
+
+                /*// Calculer l'index de début et de fin pour la pagination
+                const startIndex = (page - 1) * 10;
+                const endIndex = page * 10;*/
                 const usersResponse = await fetch(BASE_URL + 'users');
                 if (!usersResponse.ok) {
                     throw new Error('Erreur lors de la récupération des utilisateurs');
                 }
                 const usersData = await usersResponse.json();
 
-                // Récupérer les données de la table "dislikes" depuis Firebase
-                const dislikesSnapshot = await get(ref(database, 'dislikes'));
-                const dislikesData = Object.values(dislikesSnapshot.val() || {});
-
-                // Récupérer les données de la table "likes" depuis Firebase
-                const likesSnapshot = await get(ref(database, 'likes'));
-                const likesData = Object.values(likesSnapshot.val() || {});
-
-                // Filtrer les données pour ne pas inclure l'utilisateur connecté et ceux qui n'ont pas de img_link
-                const filteredData = usersData.filter(user => user.Id !== Id && user.img_link);
+                // Filtrer les données pour ne pas inclure l'utilisateur connecté et ceux qui n'ont pas de photo
+                const filteredData = usersData.filter(user => user.id !== Id && user.photo);
 
                 // Filtrer les utilisateurs bloqués
                 const finalData = filteredData.filter(user => {
-                    const hasBlockedCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocking_user_id === Id && blockedUser.blocked_user_id === user.Id);
-                    const isBlockedByCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocked_user_id === Id && blockedUser.blocking_user_id === user.Id);
+                    const hasBlockedCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocking_user_id === Id && blockedUser.blocked_user_id === user.id);
+                    const isBlockedByCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocked_user_id === Id && blockedUser.blocking_user_id === user.id);
                     return !hasBlockedCurrentUser && !isBlockedByCurrentUser;
-                });
-                console.log('Filtered Data:', finalData); // Vérifier les données filtrées
+                  });
+                
 
-                // Filtrer les utilisateurs présents dans la table "dislikes"
-                const formattedData = finalData.filter(user => {
-                    // Vérifier si l'utilisateur est présent dans la table "dislikes"
-                    return !dislikesData.some(dislike => dislike.dislikedUserId === user.Id);
-                });
-                console.log('Filtered Data:', formattedData); // Vérifier les données filtrées
 
-                const doneData = formattedData.filter(user => {
-                    // Vérifier si l'utilisateur est présent dans la table "likes"
-                    return !dislikesData.some(like => like.likedUserId === user.Id);
-                });
-                console.log('Filtered Data:', doneData); // Vérifier les données filtrées
-
-                const formattedUserData = doneData.map(user => ({
-                    nom: user.Nom,
-                    age: calculateAge(user.Date_de_naissance),
-                    Situation: user.Situation,
-                    Images: user.img_link,
-                    Sexe: user.Sexe,
-                    Id: user.Id
+                const formattedData = finalData.map(user => ({
+                    pseudo: user.pseudo,
+                    age: calculateAge(user.d_naissance),
+                    situation: user.situation,
+                    photo: user.photo,
+                    sexe: user.sexe,
+                    id: user.id
                 }));
 
                 // Mettre à jour les cartes existantes avec les nouvelles données paginées
-                setCards(prevCards => [...prevCards, ...formattedUserData]);
+                setCards(prevCards => [...prevCards, ...formattedData]);
                 setLoading(false); // Marquer le chargement comme terminé
-                console.log('Données récupérées avec succès :', usersData);
+               
             } catch (error) {
                 console.error('Erreur lors de la récupération des données:', error);
                 setLoading(false); // Marquer le chargement comme terminé en cas d'erreur
@@ -186,6 +131,28 @@ const ContenuRencontres = () => {
         fetchData();
     }, [page, Id]); // Rafraîchir les données chaque fois que la page change ou lorsque les utilisateurs bloqués sont mis à jour
 
+    const database = getDatabase();
+
+    const swipeLeft = () => {
+        swiperRef.swipeLeft();
+    };
+
+    const swipeRight = () => {
+        swiperRef.swipeRight();
+    };
+
+    const insererDonnees = (likerId, likedUserId, likedUser) => {
+        try {
+            const newDataRef = push(ref(database, 'likes'));
+            set(newDataRef, {
+                likerId: likerId,
+                likedUserId: likedUserId,
+                likedUserProfile: likedUser
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'insertion des données:', error);
+        }
+    };
 
     const checkMatches = async (userId, likedUserId) => {
         const likesRef = ref(database, 'likes');
@@ -205,10 +172,10 @@ const ContenuRencontres = () => {
                 );
 
                 if (currentUserLike && likedUserLike) {
-                    const likedUser = cards.find(user => user.Id === likedUserId);
+                    const likedUser = cards.find(user => user.id === likedUserId);
                     if (likedUser) {
                         setShowMatchModal(true);
-                        setLikedUserName(likedUser.nom); // Utiliser le nom de l'utilisateur aimé
+                        setLikedUserName(likedUser.pseudo); // Utiliser le nom de l'utilisateur aimé
                     }
                 }
             }
@@ -232,15 +199,27 @@ const ContenuRencontres = () => {
         inputRange: [0, 0.3, 0.5, 1],
         outputRange: ['#79328d', '#f94990', '#79328d', '#f94990'],
     });
-
-
-    const onPressProfil = (userData) => {
-
-
-        navigation.navigate('Profil', { userData: userData });
-        console.log('Profil', userData);
+    
+    const onPressProfil = async (userData1) => {
+        try {
+            // Effectuer une requête pour récupérer les données de l'utilisateur correspondant à matchedUserId
+            const response = await fetch(BASE_URL + 'users');
+            const userData = await response.json();
+            const filteredData = userData.filter(user => user.id == userData1);
+            if (filteredData.length > 0) {
+              const userData = filteredData[0]; // Accéder au premier élément du tableau
+              console.log('userData:', userData);
+              navigation.navigate('Profil', { userData });
+            } else {
+              console.error("Aucun utilisateur correspondant trouvé.");
+              // Gérer le cas où aucun utilisateur correspondant n'est trouvé
+            }
+          } catch (error) {
+            console.error('Erreur lors de la récupération des données de l\'utilisateur:', error);
+            // Gérer l'erreur selon vos besoins
+          }
     };
-
+    
 
 
     return (
@@ -261,7 +240,7 @@ const ContenuRencontres = () => {
                         if (!card) return null;
                         return (
                             <View style={styles.ImageContainer}>
-                                <Image source={card.Images ? { uri: BASE_URL + card.Images } : defaultAvatar(card.Sexe)}
+                                <Image source={card.photo ? { uri: BASE_URL_IMAGE+'profile/' + card.photo } : defaultAvatar(card.sexe)}
                                     style={styles.BackgroundImage} />
                                 <LinearGradient
                                     colors={['rgba(0, 0, 0, 0.5)', 'rgba(0, 0, 0, 0.5)', 'rgba(0, 0, 0, 0.4)', 'rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.2)', 'rgba(0, 0, 0, 0.1)', 'rgba(0, 0, 0, 0)']}
@@ -272,26 +251,26 @@ const ContenuRencontres = () => {
                                     <View style={styles.Text}>
                                         <View style={styles.NomEtInfoContenu}>
                                             <View style={styles.NomEtInfoContenu}>
-                                                <Text style={[styles.NOM, { fontFamily: 'nomrencotre-font', color: isDarkMode ? '#ffffff' : '#ffffff' }]}>{card.nom}, {card.age} ans</Text>
+                                                <Text style={[styles.NOM ,{ fontFamily: 'nomrencotre-font',color: isDarkMode ? '#ffffff' : '#ffffff' }]}>{card.pseudo}, {card.age} ans</Text>
                                             </View>
                                             <View style={styles.INFO}>
-                                                <Pressable style={styles.Icon} onPress={() => onPressProfil(card)}>
+                                                <Pressable style={styles.Icon} onPress={() => onPressProfil(card.id)}>
                                                     <Ionicons name="information-circle" size={25} color="white" />
                                                 </Pressable>
                                             </View>
                                         </View>
-                                        <Text style={[styles.Situation, { fontFamily: 'custom-font' }]}>{card.Situation}</Text>
+                                        <Text style={[styles.Situation,{ fontFamily: 'custom-font'}]}>{card.situation}</Text>
                                     </View>
                                 </LinearGradient>
                                 <View style={styles.Pressable}>
                                     <View style={styles.Circle}>
                                         <TouchableOpacity style={styles.Icon} onPress={swipeLeft}>
-                                            <Ionicons name="close" size={50} color={isDarkMode ? '#79328d' : 'black'} />
+                                            <Ionicons name="close" size={50}color={isDarkMode ? '#79328d' : 'black'}  />
                                         </TouchableOpacity>
                                     </View>
                                     <View style={styles.Circle1}>
                                         <TouchableOpacity style={styles.Icon} onPress={swipeRight}>
-                                            <Ionicons name="heart" size={50} color={isDarkMode ? '#79328d' : 'black'} />
+                                            <Ionicons name="heart" size={50}  color={isDarkMode ? '#79328d' : 'black'} />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -304,12 +283,11 @@ const ContenuRencontres = () => {
                             </View>
                         );
                     }}
-                    onSwipedLeft={onSwipedLeft}
                     onSwipedRight={onSwipedRight}
                     onSwiped={(cardIndex) => console.log('Card swiped:', cardIndex)}
                     onSwipedAll={() => console.log('All cards have been swiped')}
                     cardIndex={0}
-                    backgroundColor={isDarkMode ? '#000000' : '#ffffff'}
+                     backgroundColor={isDarkMode ? '#000000' : '#ffffff'}
                     stackSize={2}
                     verticalSwipeEnabled={false}
                     verticalSwipe={false}
@@ -336,15 +314,15 @@ const ContenuRencontres = () => {
                     <View style={styles.contenuerreurText}>
 
                         <Text style={styles.modalText1}>Félicitations !</Text>
-                        <Text style={styles.modalText2}> Vous êtes matché avec{nom} </Text>
+                        <Text style={styles.modalText2}> Vous êtes matché avec{pseudo} </Text>
                         <Pressable onPress={onPressProfil} style={styles.modaleProfile} >
-                            <Text style={styles.modalText3}>Voir Profil de {nom} </Text>
+                            <Text style={styles.modalText3}>Voir Profil de {pseudo} </Text>
                         </Pressable>
                         <Pressable onPress={closeModal} style={styles.modaleProfile1} >
                             <Text style={styles.modalText4}>Igniorer</Text>
                         </Pressable>
                     </View>
-
+                   
                 </Animated.View>
             </Modal>
             {showMatchModal && <FloatingHearts />}
@@ -456,7 +434,7 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
-        zIndex: 5,
+        zIndex:5,
     },
     modalText: {
         fontSize: 18,
@@ -485,7 +463,7 @@ const styles = StyleSheet.create({
         zIndex: 3,
         color: 'white',
         textAlign: 'center',
-
+      
         fontSize: 15,
         fontWeight: 'bold',
         marginBottom: 10,
@@ -494,7 +472,7 @@ const styles = StyleSheet.create({
         zIndex: 3,
         color: 'black',
         textAlign: 'center',
-
+      
         fontSize: 15,
         fontWeight: 'bold',
         marginBottom: 10,
@@ -531,7 +509,7 @@ const styles = StyleSheet.create({
         width: 300,
         height: 40,
         borderRadius: 20,
-        justifyContent: 'center',
+        justifyContent:'center',
     },
     modaleProfile1: {
         backgroundColor: 'white',
@@ -539,7 +517,7 @@ const styles = StyleSheet.create({
         width: 300,
         height: 40,
         borderRadius: 20,
-        justifyContent: 'center',
+        justifyContent:'center',
     },
 });
 

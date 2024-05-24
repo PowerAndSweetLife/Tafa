@@ -10,7 +10,7 @@ import { getDatabase, ref, onValue } from 'firebase/database';
 
 const Footer = () => {
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const navigation = useNavigation();
   const { isDarkMode } = useTheme();
   const [newMessagesCount, setNewMessagesCount] = useState(0);

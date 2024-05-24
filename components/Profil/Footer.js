@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ToastAndroid, Pressable, Modal, TouchableHighlight, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Modal, Animated, Easing, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
@@ -17,19 +17,16 @@ import { Alert } from "react-native";
 function Footer() {
   const route = useRoute();
   const userData = route.params.userData;
+
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
   const { isDarkMode } = useTheme();
+
   const navigation = useNavigation();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [reportModalVisible, setReportModalVisible] = useState(false);
-  const [thirdModalVisible, setThirdModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true); // Ajout de l'état de chargement
-
-
 
   const onPressBloquer = async () => {
-    const blockedUserId = userData.Id//'ID_de_l_utilisateur_à_bloquer';
+    const blockedUserId = userData.id//'ID_de_l_utilisateur_à_bloquer';
+
     try {
       const response = await fetch(BASE_URL + 'Blocage', {
         method: 'POST',
@@ -47,7 +44,7 @@ function Footer() {
         // Traitez la réponse ou actualisez l'interface utilisateur si nécessaire
         // Afficher une alerte personnalisée
         Alert.alert(
-          `Utilisateur ${userData.Nom} bloqué avec succès`,
+          `Utilisateur ${userData.pseudo} bloqué avec succès`,
           'Redirection vers l\'accueil...',
           [
             { text: "OK", onPress: () => navigation.navigate('Accueil') }
@@ -55,7 +52,6 @@ function Footer() {
         );
         // Fermer la modal après l'affichage de l'alerte
         setModalVisible(false);
-        // Recharger les données
         fetchUsersAndFilter();
       } else {
         console.log('Erreur lors du blocage de l\'utilisateur: ', response.statusText);
@@ -65,6 +61,11 @@ function Footer() {
       error_log('Erreur lors du blocage de l\'utilisateur: '.error);
     }
   };
+  const [loading, setLoading] = useState(true); // Ajout de l'état de chargement
+
+  // ...
+  const [modalVisible, setModalVisible] = useState(false);
+
 
   const openModal = () => {
     setModalVisible(true);
@@ -73,17 +74,10 @@ function Footer() {
     setModalVisible(false);
   };
 
-  const openReportModal = () => {
-    setReportModalVisible(true);
-  };
-  const closeReportModal = () => {
-    setReportModalVisible(false);
-  };
-  const openThirdModal = () => {
-    setThirdModalVisible(true);
-  };
-  const closeThirdModal = () => {
-    setThirdModalVisible(false);
+
+  const onPressSignale = () => {
+    console.log('Profil', userData);
+    navigation.navigate('Signale', { userData: userData });
   };
 
   useEffect(() => {
@@ -96,6 +90,31 @@ function Footer() {
   }, []);
 
 
+  const [isVisible, setIsVisible] = useState(true);
+  const opacity = new Animated.Value(1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible((prev) => !prev);
+    }, 500); // Changer cette valeur pour ajuster la vitesse du clignotement
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(opacity, {
+        toValue: isVisible ? 1 : 0,
+        duration: 500, // Changer cette valeur pour ajuster la vitesse du clignotement
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    animation.start();
+
+    return () => animation.stop();
+  }, [isVisible]);
+
 
 
   if (loading) {
@@ -107,15 +126,18 @@ function Footer() {
       <View style={[style.Contenair, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
         <TouchableOpacity onPress={openModal} style={[style.Pressable, { backgroundColor: isDarkMode ? '#79328d' : 'lightgrey' }]}>
           <View style={style.PressableENtier}>
-            <Text style={[style.TExt, { color: isDarkMode ? 'white' : '#000000' }]} >Bloquer {userData.Nom} ?</Text>
+            <Text style={[style.TExt, { fontFamily: 'custom-fontmessage', color: isDarkMode ? 'white' : '#000000' }]} >Bloquer {userData.pseudo} ?</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={openReportModal} style={[style.Pressable, { backgroundColor: isDarkMode ? '#79328d' : 'lightgrey' }]}>
+        <TouchableOpacity onPress={onPressSignale} style={[style.Pressable, { fontFamily: 'custom-fontmessage', backgroundColor: isDarkMode ? '#79328d' : 'lightgrey' }]}>
           <View style={style.PressableENtier}>
-            <Text style={{ color: 'red' }}>Signaler {userData.Nom} ?</Text>
+            <Text style={{ fontSize: 15, color: 'red', fontFamily: 'custom-fontmessage' }}>Signaler {userData.pseudo} ?</Text>
           </View>
         </TouchableOpacity>
+
+
+
       </View>
 
       <Modal
@@ -125,30 +147,27 @@ function Footer() {
         onRequestClose={closeModal}
       >
         {/* Contenu de modal */}
-        <View style={style.modalContainer}>
-          <View style={style.modalContent}>
+        <View style={[style.modalContainer, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)' }]}>
+
+
+          <View style={[style.modalContent, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}  >
+
             <View style={style.CLosePressable}>
-              <TouchableOpacity onPress={closeModal}>
-                <Ionicons name="close" size={30} color="red"></Ionicons>
-              </TouchableOpacity>
-              <Text style={style.textreport}>Bloquer</Text>
-              <TouchableOpacity >
-                <Ionicons name="close" size={30} color="white"></Ionicons>
-              </TouchableOpacity>
+
             </View>
 
             <View style={style.textModal}>
-              <Text>Bloquer , {userData.Nom} ?</Text>
-              <Text>Est ce que vous êtes sûr(e) ?</Text>
+              <Text style={[{ fontFamily: 'modal-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Bloquer , {userData.pseudo} ?</Text>
+              <Text style={[{ fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : '#000000' }]}>Est ce que vous êtes sûr(e) ?</Text>
             </View>
 
             <View style={style.modalPressablebox}>
               <TouchableOpacity style={style.modalPressable} onPress={onPressBloquer}>
-                <Text style={style.TExt}>  Oui , Bloquer </Text>
+                <Text style={[style.TExt, { fontFamily: 'custom-fontmessage' }]}>  Oui , Bloquer </Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={style.modalPressable1} onPress={closeModal}>
-                <Text style={style.TExt}>non , Retour</Text>
+                <Text style={[style.TExt, { fontFamily: 'custom-fontmessage' }]}>non , Retour</Text>
               </TouchableOpacity>
             </View>
 
@@ -157,82 +176,10 @@ function Footer() {
         </View>
       </Modal>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={reportModalVisible}
-        onRequestClose={closeReportModal}
-      >
-        <View style={style.reportModalContainer}>
-          <View style={style.reportModalContent}>
-            <View style={style.texticonreportmodal}>
-              <Ionicons name="arrow-back-outline" size={30} color="grey"></Ionicons>
-              <Text style={style.textreport}>Signaler</Text>
-              <TouchableOpacity onPress={closeReportModal}>
-                <Ionicons name="close" size={30} color="red"></Ionicons>
-              </TouchableOpacity>
-            </View>
-
-            <View>
-              <Text style={style.textveuillez}>Veuillez sélectionner un Problème</Text>
-            </View>
-            <TouchableOpacity style={style.textcontent} onPress={openThirdModal}>
-              <Text>Usurpation d'identité</Text>
-              <Ionicons name="arrow-forward-circle-outline" size={30} color="grey"></Ionicons>
-            </TouchableOpacity>
-            <TouchableOpacity style={style.textcontent} onPress={openThirdModal}>
-              <Text>Faux compte</Text>
-              <Ionicons name="arrow-forward-circle-outline" size={30} color="grey"></Ionicons>
-            </TouchableOpacity>
-            <TouchableOpacity style={style.textcontent} onPress={openThirdModal}>
-              <Text>Faux nom</Text>
-              <Ionicons name="arrow-forward-circle-outline" size={30} color="grey"></Ionicons>
-            </TouchableOpacity>
-            <TouchableOpacity style={style.textcontent} onPress={openThirdModal}>
-              <Text>Harcèlement et intimidation</Text>
-              <Ionicons name="arrow-forward-circle-outline" size={30} color="grey"></Ionicons>
-            </TouchableOpacity>
-          </View>
-
-        </View>
-      </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={thirdModalVisible}
-        onRequestClose={closeThirdModal}
-      >
-        <View style={style.thirdModalContainer}>
-          <View style={style.thirdModalContent}>
-            <View style={style.texticonthirdmodal}>
-              <TouchableOpacity onPress={closeThirdModal} >
-                <Ionicons name="arrow-back-outline" size={30} color="grey"></Ionicons>
-              </TouchableOpacity>
-              <Text style={style.textreport}>Signaler</Text>
-              <TouchableOpacity onPress={() => { closeThirdModal(); closeReportModal(); }} style={style.texticonreport}>
-                <Ionicons name="close" size={30} color="red"></Ionicons>
-              </TouchableOpacity>
-            </View>
-
-            <View>
-              <Text style={style.textcontentsignale}>Signaler quelque chose allant à l'encontre des standards de la communauté</Text>
-            </View>
-            <View >
-              <Text style={style.textcontentModalthird}>Nos standards expliquent ce que nous autorisons ou non sur Tafa. Nous les révisions et mettons  à jour régulièrement avec l'aide expert</Text>
-            </View>
-            <TouchableOpacity style={style.envoyerstyle} onPress={() => { closeThirdModal(); closeReportModal(); }}>
-              <View >
-                <Text style={style.envoyer}>Envoyer</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal >
-    </View >
+    </View>
 
   );
 }
-
 const style = StyleSheet.create({
   Contenair: {
     display: 'flex',
@@ -259,15 +206,37 @@ const style = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: 'center',
-    backgroundColor: 'white',
-    opacity: 0.9,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: '100%',
+    height: "100%"
+  },
+  modalContainerSigniale: {
+    display: 'flex',
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: '100%',
+    height: "100%"
   },
   modalContent: {
+    display: 'flex',
+
+    justifyContent: 'center',
     height: 290,
-    borderWidth: 0.1,
     width: '98%',
     top: 100,
-    borderRadius: 5,
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  modalContentSigniale: {
+    //    height: 600,
+    //borderWidth: 0.1,
+    width: '98%',
+    // top: 20,
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20,
+    backgroundColor: 'white',
 
   },
   CLosePressable: {
@@ -278,15 +247,50 @@ const style = StyleSheet.create({
     marginBottom: 5,
     padding: 5
   },
+  CLosePressableSigniale: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+    paddingRight: 10,
+
+  },
+  modalPressableaNNULER: {
+    backgroundColor: 'red',
+    width: 100,
+    height: 30,
+    borderRadius: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: 10,
+  },
   TExt: {
     color: "white",
     fontSize: 15,
+  },
+  TExt1: {
+    fontSize: 17,
+  },
+  TExt2: {
+    fontSize: 12,
+
   },
   signalerView: {
     fontSize: 20,
     color: "black",
   },
   modalPressablebox: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  modalPressableboxSignale: {
+    height: 300,
+    width: '100%',
+    display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
@@ -299,6 +303,7 @@ const style = StyleSheet.create({
     width: 200,
     borderRadius: 50,
     borderColor: "red",
+    width: "80%",
     margin: 10,
     justifyContent: "center",
     alignItems: "center",
@@ -312,6 +317,18 @@ const style = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 50,
+    borderColor: "#07668f",
+    margin: 5,
+  },
+  modalPressable2: {
+    backgroundColor: '#07668f',
+    opacity: 0.8,
+    borderWidth: 1,
+    height: 40,
+    width: "97%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
     borderColor: "#07668f",
     margin: 5,
   },

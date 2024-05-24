@@ -15,7 +15,7 @@ const Footer = () => {
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isBlinking, setIsBlinking] = useState(false);
   const [scaleValue] = useState(new Animated.Value(1));
-  const [isFontLoaded, setIsFontLoaded] = useState(false); // État pour suivre le chargement de la police
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
 
   useEffect(() => {
     const loadFonts = async () => {

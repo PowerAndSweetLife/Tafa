@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { BASE_URL } from "../helper/url";
+import { BASE_URL_IMAGE } from "../helper/url";
 import { useTheme } from './context/usercontexttheme';
 
 
@@ -13,9 +14,13 @@ const NavMessage = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const userData = route.params.userData;
+  const photo = userData.photo;
+  const couverture = userData.couverture ;
+  const pseudo = userData.pseudo;
+ 
   const { isDarkMode } = useTheme();
-  console.log( 'test',route.params.userData); // Check if userData is received correctly
-  
+
+ 
 
   const onPressBack = () => {
     navigation.goBack();
@@ -34,14 +39,14 @@ const NavMessage = () => {
       <View style={[styles.contenuProfile, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
         <View style={styles.IMageContenu}>
-          <Image source={{ uri: BASE_URL + userData.img_link }} style={styles.IMage} ></Image>
+          <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ photo }} style={styles.IMage} ></Image>
 
         </View>
 
         <View style={styles.TextContenu}>
           
           <View style={styles.description}>
-            <Text  style={[styles.nom, { color: isDarkMode ? '#ffffff':'#000000'  }]}>{userData.Nom}</Text>
+            <Text  style={[styles.nom, { color: isDarkMode ? '#ffffff':'#000000'  }]}>{pseudo}</Text>
             <Text style={[{ fontFamily: 'custom-fontmessage',color: isDarkMode ? '#ffffff':'#000000'  }]} >EnLigne</Text>
           </View>
 

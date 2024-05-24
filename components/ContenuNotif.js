@@ -11,6 +11,12 @@ import * as Font from 'expo-font';
 import { BackHandler } from 'react-native';
 
 const ContenuNotif = () => {
+    const navigation = useNavigation();
+    const [loading, setLoading] = useState(true);
+    const { Monprofil } = useUser();
+    const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
+    const [notifications, setNotifications] = useState([]);
+    const { isDarkMode } = useTheme();
     const handleBackPress = () => {
         navigation.goBack(); // Revenir à l'écran précédent
         return true; // Indiquer que l'événement a été géré
@@ -35,12 +41,7 @@ const ContenuNotif = () => {
       }, []);
 
 
-    const navigation = useNavigation();
-    const [loading, setLoading] = useState(true);
-    const { Monprofil } = useUser();
-    const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
-    const [notifications, setNotifications] = useState([]);
-    const { isDarkMode } = useTheme();
+  
   
     useEffect(() => {
         const fetchData = async () => {
@@ -89,9 +90,7 @@ const ContenuNotif = () => {
     }, [Id]);
     
 
-    const onPressProfil = () => {
-        navigation.navigate('Profil');
-    };
+;
 
     const renderNotificationItem = ({ item }) => {
         const currentTime = Date.now();
@@ -121,7 +120,7 @@ const ContenuNotif = () => {
         
 
         return (
-            <Pressable onPress={onPressProfil}>
+          
                 <View style={styles.Container}>
                     <View style={styles.NotifContainer}>
                         <View style={styles.NotifProfil}>
@@ -139,7 +138,7 @@ const ContenuNotif = () => {
                         </View>
                     </View>
                 </View>
-            </Pressable>
+           
         );
     };
 

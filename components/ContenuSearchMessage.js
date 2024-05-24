@@ -17,7 +17,7 @@ const ContenuSearchMessage = () => {
   const { isDarkMode } = useTheme();
   const navigation = useNavigation();
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const [donnees, setDonnees] = useState([]);
   const [Idvisited, setIdVisited] = useState(null);
   const [userData, setUserData] = useState([]);
@@ -90,7 +90,7 @@ const ContenuSearchMessage = () => {
             const response = await fetch(BASE_URL + 'users');
             const userData = await response.json();
 
-            const filteredData = userData.filter(user => user.Id === id);
+            const filteredData = userData.filter(user => user.id === id);
             userDataArray.push(filteredData[0]); // On ajoute le premier utilisateur filtré au tableau
           }
           setUserData(userDataArray);
@@ -166,7 +166,7 @@ const ContenuSearchMessage = () => {
                   <View style={styles.ContenuProfil}>
                     <Image source={{ uri: BASE_URL + profil }} style={styles.images} />
                     <View style={styles.statutContainer}>
-                      {item.enLigne ? (
+                      {item.status ? (
                         <Text style={styles.statutHorsLigne}></Text>
                       ) : (
                         <View style={styles.statutEnLigne}></View>

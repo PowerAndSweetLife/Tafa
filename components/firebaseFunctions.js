@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, onValue } from 'firebase/database';
 import { messaging } from 'firebase/messaging';
+import { getMessaging, onMessage } from 'firebase/messaging';
 
 // Votre configuration Firebase
 const firebaseConfig = {
@@ -19,6 +20,7 @@ const app = initializeApp(firebaseConfig);
 
 const insererDonnees = (Monprofil, Pseudo, profileimage) => {
   const db = getDatabase();
+  const messaging = getMessaging(app);
   const visitesRef = ref(db, 'profiles_visits');
 
   // Obtenir le timestamp actuel
@@ -40,7 +42,7 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
         const isWithin24Hours = timeDiff <= oneDayInMs;
 
         return (
-          visite.visitedUserId === Monprofil.Id &&
+          visite.visitedUserId === Monprofil.id &&
           visite.visitorUserId === Pseudo &&
           visite.img_link === profileimage &&
           isWithin24Hours
@@ -56,7 +58,7 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
 
     // Si aucune visite identique n'est trouvée dans les 24 dernières heures, procéder à l'insertion des nouvelles données
     push(visitesRef, {
-      visitedUserId: Monprofil.Id,
+      visitedUserId: Monprofil.id,
       img_link: profileimage,
       visitorUserId: Pseudo,
       Notifications: `${Pseudo} a visité votre profil`,
@@ -68,19 +70,33 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
         // Envoyer une notification à l'utilisateur visité
         const notificationMessage = `${Pseudo} a visité votre profil`;
         console.log(notificationMessage);
-        messaging().send({
-          token: userData.token, // Le token de l'utilisateur visité pour envoyer la notification
-          notification: {
-            title: 'Nouvelle visite de profil',
-            body: notificationMessage,
-          },
-        })
-          .then(() => {
-            console.log('Notification envoyée avec succès !');
-          })
-          .catch((error) => {
-            console.error('Erreur lors de l\'envoi de la notification :', error);
-          });
+        
+        messaging.getToken().then((currentToken) => {
+          if (currentToken) {
+            onMessage(messaging, (payload) => {
+              console.log('Message received. ', payload);
+            });
+
+            messaging.send({
+              token: currentToken,
+              notification: {
+                title: 'Nouvelle visite de profil',
+                body: notificationMessage,
+              },
+            })
+              .then(() => {
+                console.log('Notification envoyée avec succès !');
+              })
+              .catch((error) => {
+                console.error('Erreur lors de l\'envoi de la notification :', error);
+              });
+          } else {
+            console.log('No registration token available. Request permission to generate one.');
+          }
+        }).catch((err) => {
+          console.log('An error occurred while retrieving token. ', err);
+        });
+
       })
       .catch((error) => {
         console.error('Erreur lors de l\'insertion des données :', error);
@@ -88,5 +104,4 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
   });
 };
 
-
-export { insererDonnees, };
+export { insererDonnees };
