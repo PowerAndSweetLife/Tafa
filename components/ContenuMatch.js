@@ -1,11 +1,7 @@
 import { StyleSheet, Text, View, Image, Pressable, SafeAreaView, ScrollView } from 'react-native';
-import React from 'react'
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import SkeletonItem from '../components/skeleton/skeletoncontenuMacth';
-import 'firebase/database';
-import firebase from 'firebase/app';
-import { get, ref, getDatabase } from 'firebase/database';
 import { useUser } from './context/usercontext';
 import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
 import { useTheme } from './context/usercontexttheme';
@@ -18,34 +14,34 @@ const ContenuMatch = () => {
   const [matchedUsers, setMatchedUsers] = useState([]);
   const { Monprofil } = useUser();
   const { isDarkMode } = useTheme();
+  const [isLoading, setIsLoading] = useState(true);
+  const [noLikes, setNoLikes] = useState(false);
+
+
 
   const onPressProfil = () => {
     navigation.navigate('Profil');
   };
 
   const handleBackPress = () => {
-    navigation.goBack(); // Revenir à l'écran précédent
-    return true; // Indiquer que l'événement a été géré
+    navigation.goBack();
+    return true;
   };
+
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-
     return () => {
-      backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+      backHandler.remove();
     };
-  }, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
-
- 
-  const database = getDatabase();
-  const matchedUsersSet = new Set();
+  }, []);
 
   const fetchBlockedUsers = async () => {
     try {
-      const blockedUsersResponse = await fetch(BASE_URL + 'usersBlocked');
-      if (!blockedUsersResponse.ok) {
+      const response = await fetch(BASE_URL + 'usersBlocked');
+      if (!response.ok) {
         throw new Error('Erreur lors de la récupération des utilisateurs bloqués');
       }
-      return await blockedUsersResponse.json();
+      return await response.json();
     } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs bloqués:', error);
       return [];
@@ -53,70 +49,71 @@ const ContenuMatch = () => {
   };
 
   useEffect(() => {
-    // Fonction asynchrone pour récupérer les utilisateurs correspondants
     const fetchMatchedUsers = async () => {
       try {
-        // Vérifie si le profil de l'utilisateur actuel existe
+        const response = await fetch(BASE_URL + 'matched_users');
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des utilisateurs correspondants');
+        }
+
+        const likes = await response.json();
+        if (likes.length === 0) {
+          setNoLikes(true);
+          setIsLoading(false);
+          return;
+        }
+
         if (Monprofil) {
-          // Obtient l'ID de l'utilisateur actuel à partir de Monprofil
           const userId = Monprofil.id;
 
-          // Récupère un instantané des likes à partir de la base de données Firebase
-          const likesSnapshot = await get(ref(database, 'likes'));
+          // Récupérer les utilisateurs bloqués
+          const blockedUsers = await fetchBlockedUsers();
 
-          // Vérifie si l'instantané contient des données
-          if (likesSnapshot.exists()) {
-            // Initialise un tableau pour stocker les utilisateurs correspondants
-            const matchedUsers = [];
-            // Récupère les données des likes à partir de l'instantané
-            const likes = likesSnapshot.val();
-            // Récupère la liste des utilisateurs bloqués
-            const blockedUsers = await fetchBlockedUsers();
-
-            // Parcours chaque like dans les données récupérées
-            for (const likeKey in likes) {
-              const like = likes[likeKey];
-
-              // Vérifie si l'utilisateur actuel est le liker
-              if (userId === like.likerId) {
-                const likedUserId = like.likedUserId;
-
-                // Vérifie si l'utilisateur aimé a aimé l'utilisateur actuel
-                const likedBack = Object.values(likes).some(like2 =>
-                  likedUserId === like2.likerId && userId === like2.likedUserId
-                );
-
-                // Si l'utilisateur aimé a aimé l'utilisateur actuel
-                if (likedBack) {
-                  // Vérifie si l'utilisateur aimé est bloqué par l'utilisateur actuel
-                  const isBlocked = blockedUsers.some(blockedUser =>
-                    (blockedUser.blocking_user_id === userId && blockedUser.blocked_user_id === likedUserId) ||
-                    (blockedUser.blocking_user_id === likedUserId && blockedUser.blocked_user_id === userId)
-                  );
-
-                  // Si l'utilisateur aimé n'est pas bloqué et n'est pas déjà ajouté
-                  if (!isBlocked && !matchedUsersSet.has(likedUserId)) {
-                    // Ajoute l'utilisateur correspondant à la liste
-                    matchedUsersSet.add(likedUserId);
-                    matchedUsers.push(like.likedUserProfile);
-                  }
-                }
-              }
-            }
-            // Met à jour l'état des utilisateurs correspondants avec le nouveau tableau
-            setMatchedUsers(matchedUsers);
-          } else {
-            console.log("Aucun like trouvé.");
+          // Filtrer les likes pour obtenir les likes mutuels
+          const mutualLikes = likes.filter(like =>
+            likes.some(otherLike =>
+              otherLike.liker_id === like.liked_user_id &&
+              otherLike.liked_user_id === like.liker_id &&
+              like.liker_id === userId
+            )
+          );
+          if (mutualLikes.length === 0) {
+            setNoLikes(true);
+            setIsLoading(false);
+            return;
           }
+
+          // Récupérer les ID des utilisateurs correspondants
+          const matchedUserIds = mutualLikes.map(like => like.liked_user_id);
+
+          // Filtrer par rapport aux utilisateurs bloqués
+          const filteredMatches = matchedUserIds.filter(userId =>
+            !blockedUsers.some(blockedUser =>
+              (blockedUser.blocking_user_id === Monprofil.id && blockedUser.blocked_user_id === userId) ||
+              (blockedUser.blocking_user_id === userId && blockedUser.blocked_user_id === Monprofil.id)
+            )
+          );
+
+          // Récupérer les informations des utilisateurs correspondants
+          const userResponse = await fetch(BASE_URL + 'getusercontenuMatch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ids: filteredMatches }),
+          });
+
+          const userData = await userResponse.json();
+          const filteredData = userData.filter(user => user.id !== userId && user.photo);
+          setMatchedUsers(filteredData);
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des utilisateurs ayant des likes mutuels:", error);
+        console.error('Erreur lors de la récupération des utilisateurs correspondants:', error);
       }
     };
 
-    // Appelle la fonction fetchMatchedUsers une fois que Monprofil ou la base de données change
     fetchMatchedUsers();
-  }, [Monprofil, database]);
+  }, [Monprofil]);
 
 
 
@@ -129,16 +126,18 @@ const ContenuMatch = () => {
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.contenu}>
-          {matchedUsers.length === 0 ? (
-            // Render SkeletonItem when matchedUsers is empty
+          {isLoading ? (
             <SkeletonItem />
+          ) : noLikes ? (
+            <View style={styles.noLikesContainer}>
+              <Text style={styles.noLikesText}>Pas de likes mutuels</Text>
+            </View>
           ) : (
-            // Render matched users data
             matchedUsers.map((userData, index) => (
               <View key={index} style={styles.Imagcontainer}>
                 <Pressable onPress={onPressProfil}>
                   <Image
-                    source={{ uri: BASE_URL_IMAGE+'profile/' + userData.photo }}
+                    source={{ uri: BASE_URL_IMAGE + 'profile/' + userData.photo }}
                     style={styles.image}
                     onError={(error) => console.error("Erreur de chargement de l'image:", error)}
                   />
@@ -161,6 +160,7 @@ const ContenuMatch = () => {
     </SafeAreaView>
   );
 };
+
 
 
 const styles = StyleSheet.create({
@@ -241,6 +241,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 50,
+  },
+  noLikesContainer:{
+    width: '100%',
+    alignItems: 'center',
+  },
+  noLikesText: {
+    fontSize: 18,
+    color: 'gray',
+    marginTop: 50,
   },
 });
 

@@ -10,7 +10,7 @@ const SkeletonItem = () => {
     Animated.loop(
       Animated.timing(shimmerAnimation, {
         toValue: 1,
-        duration: 2000,
+        duration: 1450,
         useNativeDriver: true,
       })
     ).start();
@@ -18,7 +18,7 @@ const SkeletonItem = () => {
 
   const translateX = shimmerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-270, 400],
+    outputRange: [-400, 400],
   });
 
 
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop:-5
+    marginTop:-5,
     
   },
   nom: {

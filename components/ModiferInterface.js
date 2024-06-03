@@ -26,31 +26,55 @@ function ModiferInterface() {
   };
   
   useEffect(() => {
-    fetch(BASE_URL + 'Apropos')
-      .then(response => response.json())
-      .then(data => {
-        // Filtrer les données pour ne pas inclure l'utilisateur connecté
-        console.log('donnerfiltre ', Id);
-        const filteredData = data.filter(item => item.id == Id);
-        setDonnees(filteredData);
-        console.log('donnerfiltre ', filteredData);
+    const fetchData = async () => {
+      try {
+        const response = await fetch(BASE_URL + 'Apropos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: Id }),
+        });
 
-      })
-      .catch(error => {
+        if (!response.ok) {
+          throw new Error('Erreur HTTP, statut : ' + response.status);
+        }
+
+        const data = await response.json();
+        console.log('Data from API:', data);
+        if (Array.isArray(data.results)) {
+          setDonnees(data.results);
+        } else {
+          setDonnees([]);
+        }
+      }
+      catch (error) {
         console.error('Erreur lors de la récupération des données:', error);
+        setError(error); // Définition de l'erreur dans le state
+      }
+    };
 
-      });
-  }, []);
+    fetchData();
+  }, [Id]);
+
 
   const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) {
-        return null; // Ou une valeur par défaut appropriée si nécessaire
-    }
     const today = new Date();
-    const yearOfBirth = parseInt(dateOfBirth.split('-')[0]);
-    const age = today.getFullYear() - yearOfBirth;
+    const [year, month, day] = dateOfBirth.split('-').map(part => parseInt(part));
+    const birthDate = new Date(year, month - 1, day);
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    const dayDifference = today.getDate() - birthDate.getDate();
+  
+    
+    if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+      age--;
+    }
+  
     return age;
-};
+  };
+  
   console.log('donner', donnees);
   console.log("Longueur de donnees :", donnees.length); 
   if (donnees.filter(item => Object.values(item).some(value => !value)).length > 0) {
@@ -107,16 +131,16 @@ function ModiferInterface() {
             <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{calculateAge(item.d_naissance)} ans</Text>
 
             <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Habite a {item.v_natale}</Text>
-            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.Objectif}</Text>
+            <Text style={[style.Notification, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.objectif}</Text>
 
             <View>
               <Text style={style.TextLight}>Emploi</Text>
-              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}> {item.Emploi}	 </Text>
+              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}> {item.nom_profession}	 </Text>
             </View>
 
             <View>
               <Text style={style.TextLight}>Etude</Text>
-              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>Droit a l'unniversite d'antananarivo</Text>
+              <Text style={[style.esthic, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{item.nom_etude}</Text>
             </View>
 
             <View>

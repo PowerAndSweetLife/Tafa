@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, Pressable, Modal, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable, Modal ,TouchableOpacity} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AproposInterface from '../../components/AproposInterface'
 import PhotoInterface from '../../components/PhotoInterface';
 import SkeletonItem from '../../components/skeleton/skeletonprofil';
 import { useRoute } from '@react-navigation/native';
 import { BASE_URL } from "../../helper/url";
-import { BASE_URL_IMAGE } from "../../helper/url";
 import defaultHommeAvatar from '../../assets/Avatar/avatarhomme2.jpg';
 import defaultfemmeAvatar from '../../assets/Avatar/avatarfemme2.jpg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../context/usercontexttheme';
 import { useUser } from '../context/usercontext';
-import { useBackHandler } from '@react-native-community/hooks'; 
-
+import { BackHandler } from 'react-native';
+import { BASE_URL_IMAGE } from "../../helper/url";
 
 const Profil = () => {
   const route = useRoute();
   const userData = route.params.userData;
+  const description = userData && userData.description ? userData.description : '...';
   const navigation = useNavigation();
   const [currentInterface, setCurrentInterface] = useState("Profil");
   const defaultAvatar = userData.sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
@@ -30,6 +30,19 @@ const Profil = () => {
     setCurrentInterface("Photo", userData.id);
   };
 
+  const handleBackPress = () => {
+    navigation.goBack(); // Revenir à l'écran précédent
+    return true; // Indiquer que l'événement a été géré
+};
+
+useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+    return () => {
+        backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
+    };
+}, []); // Le tableau de dépendances est vide, donc cette fonction ne sera exécutée qu'une fois lors du montage initial
+
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -39,16 +52,16 @@ const Profil = () => {
     setCurrentInterface("Apropos");
   };
   const onPressMessages = async (selectedUserData) => {
-
-
+   
+    
     try {
-
-
+      
+      
       const blockedUsersResponse = await fetch(BASE_URL + 'usersBlocked');
       if (!blockedUsersResponse.ok) {
         throw new Error('Erreur lors de la récupération des utilisateurs bloqués');
       }
-
+      
       const blockedUsers = await blockedUsersResponse.json();
       const selectedUserId = selectedUserData.id;
       const currentUserBlockedIds = blockedUsers
@@ -56,10 +69,10 @@ const Profil = () => {
         .map(blockedUser => blockedUser.blocked_user_id);
 
       const isBlocked = currentUserBlockedIds.includes(selectedUserId);
-
+    
       navigation.navigate('Messages', {
         userData: selectedUserData,
-        userData: userData,
+        userData: userData ,
         showFooterMessage: !isBlocked // Show footer message only if not blocked
       });
     } catch (error) {
@@ -79,6 +92,8 @@ const Profil = () => {
   };
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
     // Simuler un chargement de données pendant 3 secondes
     const timer = setTimeout(() => {
@@ -88,10 +103,8 @@ const Profil = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useBackHandler(() => {
-    navigation.goBack(); // Revenir à l'écran précédent
-    return true; // Indiquer que l'événement a été géré
-  });
+
+
 
   if (loading) {
     return <SkeletonItem />;
@@ -104,21 +117,22 @@ const Profil = () => {
       <View style={style.couverture}>
 
         <Image
-          source={userData.couverture ? { uri: BASE_URL_IMAGE + 'profile/'+userData.couverture } : defaultAvatar}
+          source={userData.couverture ? { uri:  BASE_URL_IMAGE + 'profile/'+ userData.couverture  } : defaultAvatar}
           style={[style.image1]}
+          resizeMode="cover"
         />
 
       </View>
-      <View style={[style.profilcontenu, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}>
+      <View  style={[style.profilcontenu, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}>
         <Pressable onPress={toggleModal}>
-          <Image source={userData.photo ? { uri: BASE_URL_IMAGE + 'profile/'+userData.photo } : defaultAvatar}
-            style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}></Image>
+          <Image source={userData.photo ? { uri:  BASE_URL_IMAGE + 'profile/'+ userData.photo } : defaultAvatar}
+           style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]}></Image>
         </Pressable>
       </View>
       <View>
-        <Text style={[style.prenom, { fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.firstname  }  {userData.pseudo}</Text>
-        <Text style={[style.description, { fontFamily: 'objectif-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>
-          {userData.description}
+        <Text  style={[style.prenom, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{userData.pseudo}</Text>
+        <Text style={[style.description, {fontFamily: 'objectif-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>
+         {description}
         </Text>
       </View>
       <View style={style.apropos}>
@@ -127,10 +141,10 @@ const Profil = () => {
           style.apropos0, currentInterface === "Apropos",
           {
             backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
-            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
+            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
           },
         ]}>
-          <Text style={[style.TExt, { color: isDarkMode ? 'white' : '#07668f' }]}>A propos</Text>
+          <Text  style={[style.TExt, { color: isDarkMode ? 'white' : '#07668f' }]}>A propos</Text>
         </Pressable>
 
 
@@ -138,7 +152,7 @@ const Profil = () => {
           style.apropos1,
           {
             backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
-            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
+            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
           },
         ]}>
           <Text style={[style.TExt, { color: isDarkMode ? 'white' : '#07668f' }]}>Photos</Text>
@@ -148,7 +162,7 @@ const Profil = () => {
           style.apropos1,
           {
             backgroundColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : 'white'),
-            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') : (pressed ? '#f94990' : '#07668f'),
+            borderColor: isDarkMode ? (pressed ? '#f94990' : '#79328d') :( pressed ? '#f94990' : '#07668f'),
           },
         ]}>
           <Text style={[style.TExt, { color: isDarkMode ? 'white' : '#07668f' }]}>Messages</Text>
@@ -161,21 +175,21 @@ const Profil = () => {
       </View>
       {renderCurrentInterface()}
       <Modal visible={isModalOpen} transparent={true}>
-        <View style={style.Modal}>
-          <View style={style.modalContainer}>
-            <View style={style.modalContainerImage}>
+      <View style={style.Modal}>
+        <View style={style.modalContainer}>
+          <View style={style.modalContainerImage}>
 
-              <TouchableOpacity style={style.modalclose} onPress={toggleModal}>
-                <Ionicons name="close" size={30} color='#f94990' />
-              </TouchableOpacity>
-
+          <TouchableOpacity style={style.modalclose} onPress={toggleModal}>
+          <Ionicons name="close" size={30} color='#f94990' />
+          </TouchableOpacity>
+          
               <Image
-                source={userData.photo ? { uri: BASE_URL_IMAGE + userData.photo } : defaultAvatar}
+               source={userData.photo ? { uri:  BASE_URL_IMAGE + 'profile/'+ userData.photo } : defaultAvatar}
                 style={style.modalImage}
               />
-
-            </View>
+          
           </View>
+        </View>
         </View>
       </Modal>
     </View>
@@ -189,13 +203,13 @@ const Profil = () => {
 
 const style = StyleSheet.create({
   content: {
-    //  top: 10,
+  //  top: 10,
     backgroundColor: 'white',
   },
   couverture: {
     width: '100%',
     display: 'flex',
-    height: 200,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
     width: "100%",
@@ -205,7 +219,7 @@ const style = StyleSheet.create({
   image1: {
     alignItems: "center",
     justifyContent: "center", // Ajout de cette ligne pour centrer horizontalement
-    height: 200,
+    height: 250,
     width: "98%",
     borderRadius: 15,
     // ...StyleSheet.absoluteFillObject,
@@ -233,14 +247,14 @@ const style = StyleSheet.create({
     borderColor: 'white',
   },
   prenom: {
-    fontSize: 18.5,
+    fontSize: 15,
     paddingLeft: 12,
   },
   description: {
     fontSize: 20,
     marginLeft: 13,
     // Color: "black",
-    // fontWeight: 'bold',
+   // fontWeight: 'bold',
   },
   apropos: {
     marginTop: 15,
@@ -283,8 +297,8 @@ const style = StyleSheet.create({
   TExt: {
     fontSize: 12,
     color: '#07668f',
-    //fontWeight: 'bold'
-    fontFamily: 'custom-fontmessage'
+  //fontWeight: 'bold'
+  fontFamily: 'custom-fontmessage'
   },
 
   modalContainer: {
@@ -298,29 +312,29 @@ const style = StyleSheet.create({
     //  backgroundColor:'red',
     width: '95%',
     height: '80%',
-
+   
   },
-  modalImage: {
+  modalImage:{
     width: '100%',
     height: '100%',
     borderRadius: 10,
-    zIndex: 1,
+    zIndex:1,
   },
-  modalclose: {
-    backgroundColor: 'white',
-    width: 30,
-    height: 30,
-    position: 'absolute',
-    right: -10,
-    top: -15,
-    borderRadius: 50,
-    zIndex: 5,
+  modalclose:{
+    backgroundColor:'white',
+    width:30,
+    height:30,
+    position:'absolute',
+    right:-10,
+    top:-15,
+    borderRadius:50,
+    zIndex:5,
   },
-  Modal: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    width: '100%',
-    height: "100%"
-  },
+  Modal:{
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+     width:'100%',
+     height:"100%"
+ },
 });
 
 export default Profil;

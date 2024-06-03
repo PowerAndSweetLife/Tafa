@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from './context/usercontexttheme';
 import { useUser } from './context/usercontext';
 import { BASE_URL } from "../helper/url";
-const logo = require('../assets/images/logo.png');
+
 
 function AproposInterfacemodif() {
   const [errorMessage, setErrorMessage] = useState('');
@@ -234,48 +234,71 @@ function AproposInterfacemodif() {
   };
   const [donnees, setDonnees] = useState([]);
   useEffect(() => {
-    fetch(BASE_URL + 'users')
-        .then(response => response.json())
-        .then(data => {
-            // Filtrer les données pour ne pas inclure l'utilisateur connecté
-            const filteredData = data.filter(item => item.id == Id);
-            setDonnees(filteredData);
-            console.log('res=cus', donnees);
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des données:', error);
-
+    const fetchData = async () => {
+      try {
+        const response = await fetch(BASE_URL + 'usersdiscu', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: Id }),
         });
-
-}, []);
-
-
+  
+        if (!response.ok) {
+          throw new Error('Erreur HTTP, statut : ' + response.status);
+        }
+  
+        const data = await response.json();
+  
+        if (data && Array.isArray(data.results)) {
+          const filteredData = data.results.filter(user => user.id === Id);
+          if (filteredData.length > 0) {
+            //const userDataArray = [filteredData[0]];
+            setDonnees(filteredData);
+          } else {
+            console.error('Aucun utilisateur correspondant trouvé.');
+          }
+        } else {
+          console.error('La réponse de l\'API n\'est pas un tableau attendu:', data);
+        }
+  
+      } catch (error) {
+        console.error('Erreur lors de la récupération des données:', error);
+        setError(error); // Définition de l'erreur dans le state
+      }
+    };
+  
+    fetchData();
+  }, [Id]);
+  
+console.log('donner',donnees)
   return (
 
 
     <View style={style.Container}>
 
 <View style={style.profil}>
-      {donnees.map(item => (
-        <View key={item.Id} style={style.profil}>
-          <View style={style.porteurimage} key={item.id}>
-            <Image
-              source={item.photo ? { uri: BASE_URL + item.photo } : defaultAvatar(item.sexe)}
-              style={style.image}
-            />
-          </View>
-          <View style={style.porteurNom}>
-            <Text style={{ fontFamily: 'custom-font', fontSize: 25, fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
-              {item.pseudo}, {item.firstname}
-            </Text>
-          </View>
-          <View style={style.porteurText}>
-            <Text style={{ fontFamily: 'custom-font', fontSize: 20, fontWeight: 'bold', marginRight: 10, color: isDarkMode ? '#f94990' : '#f94990' }} >Tafa</Text>
-            <Text style={{ fontFamily: 'custom-fontmessage', fontSize: 15, fontWeight: 'light', marginRight: 10, color: isDarkMode ? '#ffffff' : '#000000' }} >Permet de Vous Rencontrer</Text>
-          </View>
+  
+{donnees.map(item => (
+      <View key={item.id} style={style.profil}>
+        <View style={style.porteurimage} key={item.id}>
+          <Image
+            source={item.photo ? { uri: BASE_URL + 'assets/images/profile/'+ item.photo } : defaultAvatar(item.sexe)}
+            style={style.image}
+          />
         </View>
-      ))}
-    </View>
+        <View style={style.porteurNom}>
+          <Text style={{ fontFamily: 'custom-font', fontSize: 25, fontWeight: 'bold', color: isDarkMode ? '#ffffff' : '#000000' }}>
+            {item.pseudo}
+          </Text>
+        </View>
+        <View style={style.porteurText}>
+          <Text style={{ fontFamily: 'custom-font', fontSize: 20, fontWeight: 'bold', marginRight: 10, color: isDarkMode ? '#f94990' : '#f94990' }} >Tafa</Text>
+          <Text style={{ fontFamily: 'custom-fontmessage', fontSize: 15, fontWeight: 'light', marginRight: 10, color: isDarkMode ? '#ffffff' : '#000000' }} >Permet de Vous Rencontrer</Text>
+        </View>
+      </View>
+    ))}
+     </View>
  
 
 

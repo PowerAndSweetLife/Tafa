@@ -4,13 +4,14 @@ import { View, Text, Pressable, StyleSheet, Image, Animated } from "react-native
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState, useEffect, useRef } from 'react';
 //import { useUser } from './context/usercontext';
-import { BASE_URL, BASE_URL_IMAGE } from "../helper/url";
+import { BASE_URL } from "../helper/url";
 import Modal from 'react-native-modal';
 import * as ImagePicker from 'expo-image-picker';
 import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/context/usercontext';
 import { useTheme } from './context/usercontexttheme';
-
+import defaultHommeAvatar from '../assets/Avatar/avatarhomme2.jpg';
+import defaultfemmeAvatar from '../assets/Avatar/avatarfemme2.jpg';
 
 function PhotoModif() {
 
@@ -39,27 +40,51 @@ function PhotoModif() {
     ).start();
   }, []);
 
-  useEffect(() => {
-    fetch(BASE_URL + 'users')
-      .then(response => response.json())
-      .then(data => {
+ useEffect(() => {
+  const fetchUserData = async () => {
+  try {
+    const response = await fetch(BASE_URL + 'usersdiscu', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: Id }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Erreur HTTP, statut : ' + response.status);
+    }
+  
+    const data = await response.json();
+    console.log('Data from API:', data);
+  
+    if (data && Array.isArray(data.results)) {
+      const filteredData = data.results.filter(user => user.id === Id);
+      setDonnees(filteredData);
+      console.log('ito',filteredData)
+      if (filteredData.length > 0) {
+        // Mettre à jour l'URL de l'image si des données filtrées sont disponibles
+        setImgLink(filteredData[0].photo);
+        setImgcouverture(filteredData[0].couverture);
 
-        const filteredData = data.filter(user => user.id === Id);
-        setDonnees(filteredData);
-        console.log(filteredData);
+      }else {
+        console.error('Aucun utilisateur correspondant trouvé.');
+      }
+    } else {
+      console.error('La réponse de l\'API n\'est pas un tableau attendu:', data);
+    }
+  
+    
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données:', error);
+    setError(error); // Définition de l'erreur dans le state
+  }
+}
+fetchUserData();
+  }, [Id]);
 
-        if (filteredData.length > 0) {
-          // Mettre à jour l'URL de l'image si des données filtrées sont disponibles
-          setImgLink(filteredData[0].photo);
-          setImgcouverture(filteredData[0].couverture);
+  
 
-        }
-      })
-      .catch(error => {
-        console.error('Erreur lors de la récupération des données:', error);
-        setLoading(false);
-      });
-  }, []);
 
   const uploadImageToServerautre = async (imageUri) => {
     try {
@@ -87,9 +112,13 @@ function PhotoModif() {
       console.error('Erreur lors de l\'envoi de l\'image:', error);
     }
   };
+
+
   const defaultAvatar = (sexe) => {
     return sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
   };
+
+
   const pickImageautre = async () => {
     const response = await fetch(BASE_URL + 'users');
     const userData = await response.json();
@@ -278,12 +307,12 @@ function PhotoModif() {
       }]}>
         <View style={style.imageContainer}>
           <View style={style.image} >
-            <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ photo }} style={style.imageajouter} />
+            <Image source={{ uri: BASE_URL +'/assets/images/profile/'+ img_link }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
           </View>
           <View style={style.image}>
-            <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ couverture }} style={style.imageajouter} />
+            <Image source={{ uri: BASE_URL +'/assets/images/profile/'+ img_couverture }} style={style.imageajouter} />
             <View style={style.Iconcontenu}>
             </View>
           </View>

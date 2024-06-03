@@ -30,7 +30,7 @@ const SkeletonProfile = () => {
         style={[
           styles.Scroller,
           { backgroundColor: '#f2f2f2',width: '100%',
-          height: 200,
+          height: 250,
           zIndex:3, 
           position: 'absolute',transform: [{ translateX }] },
         ]}
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: '100%',
-    height: 200,
+    height: 250,
     backgroundColor: '#e0e0e0',
     marginBottom: 15,
     borderRadius: 15,

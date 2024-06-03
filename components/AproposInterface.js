@@ -8,7 +8,6 @@ import { BASE_URL } from "../helper/url";
 import { useRoute } from '@react-navigation/native';
 const logo = require('../assets/images/logo.png');
 import loadFonts from './loadFonts';
-import { BackHandler } from 'react-native';
 
 
 
@@ -67,18 +66,7 @@ function AproposInterface() {
   };
 
 
-  const handleBackPress = () => {
-    navigation.goBack(); // Revenir à l'écran précédent
-    return true; // Indiquer que l'événement a été géré
-};
-
-useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-
-    return () => {
-        backHandler.remove(); // Supprimer l'écouteur lors du démontage du composant
-    };
-}, []); 
+ 
 
 
   return (

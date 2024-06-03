@@ -20,11 +20,11 @@ function FooterMessages() {
   const userData1 = route.params.userData;
   const Idrecusmes = userData1 && userData1.id ? userData1.id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
   const Nomrecusmes = userData1 && userData1.pseudo ? userData1.pseudo : 'Nom';
-  const profilrecumes = userData1 && userData1.photo ? userData1.photo : 'photo';
+  const profilrecumes = userData1 && userData1.photo ? userData1.photo : 'img_link';
   const { Monprofil } = useUser();
   const Idenvoyermes = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const Nomenvoyermes = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'Nom';
-  const profilenvoyermes = Monprofil && Monprofil.photo ? Monprofil.photo : 'photo';
+  const profilenvoyermes = Monprofil && Monprofil.photo ? Monprofil.photo : 'img_link';
   const [inputValue, setInputValue] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
   const [emojiSelected, setEmojiSelected] = useState(false);
@@ -93,10 +93,24 @@ const handleEmojiSelected = (emoji) => {
    
 };
 
-  const onPressEnvoyer = () => {
+  const onPressEnvoyer = async () => {
     if (inputValue.trim() !== '') {
-      insererDonnees(Idenvoyermes, Idrecusmes, inputValue, profilrecumes, Nomrecusmes, Nomenvoyermes, profilenvoyermes);
-      setInputValue('');
+  //    insererDonnees(Idenvoyermes, Idrecusmes, inputValue, profilrecumes, Nomrecusmes, Nomenvoyermes, profilenvoyermes);
+  const res = await fetch(BASE_URL + 'messages', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: Idenvoyermes,
+      receiver: Idrecusmes,
+      lastMessage: inputValue,
+      lastSender: Idenvoyermes,
+      statusReceiver:0,
+    }),
+  });  
+  setInputValue('');
     } else {
       // Afficher un message indiquant que l'entrée est vide
       ToastAndroid.show("Veuillez entrer un message", ToastAndroid.SHORT);

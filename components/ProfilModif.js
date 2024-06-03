@@ -21,12 +21,19 @@ import * as Font from 'expo-font';
 import { BackHandler } from 'react-native';
 
 
+
+
+
 function NavProfilModif() {
   const navigation = useNavigation();
   const handleBackPress = () => {
     navigation.goBack(); // Revenir à l'écran précédent
     return true; // Indiquer que l'événement a été géré
 };
+
+
+
+
 
 useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
@@ -55,11 +62,14 @@ useEffect(() => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentInterface, setCurrentInterface] = useState("Profil");
   const { Monprofil } = useUser();
-  const pseudo = Monprofil && Monprofil.Pseudo ? Monprofil.Pseudo : 'pseudo par défaut';
-  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+  const pseudo = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'pseudo par défaut';
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
   const sexe = Monprofil && Monprofil.sexe ? Monprofil.sexe : 'sexe';
-  const [img_link, setImgLink] = useState('');
-  const [img_couverture, setImgcouverture] = useState('');
+  const photo = Monprofil && Monprofil.photo ? Monprofil.photo : 'defaurphoto';
+  const description = Monprofil && Monprofil.description ? Monprofil.description : '❤️❤️';
+  const couverture = Monprofil && Monprofil.couverture ? Monprofil.couverture : 'couverture';
+  const [imgLink, setImgLink] = useState(''); // Define imgLink state variable
+  const [imgCouverture, setImgcouverture] = useState('');
   const loadingAnimation = useRef(new Animated.Value(0)).current;
   const loadingProfileAnimation = useRef(new Animated.Value(0)).current;
   const [loadingCouverture, setLoadingCouverture] = useState(false);
@@ -73,6 +83,32 @@ useEffect(() => {
     setIsRefreshing(true);
     setIsRefreshing(false);
   };
+
+  
+  /*
+    const [img_link, setImgLink] = useState('');
+  const [img_couverture, setImgcouverture] = useState('');
+  useEffect(() => {
+    fetch(BASE_URL + 'users')
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        const filteredData = data.filter(user => user.pseudo === pseudo);
+        setDonnees(filteredData);
+        console.log(filteredData);
+        if (filteredData.length > 0) {
+          setImgLink(filteredData[0].photo);
+          setImgcouverture(filteredData[0].couverture);
+         
+        }
+      })
+      .catch(error => {
+        console.error('Erreur lors de la récupération des données:', error);
+        setLoading(false);
+      });
+  }, [pseudo]);*/
+
+
 
   const onPressPhotos = () => {
     setCurrentInterface("Photo");
@@ -98,7 +134,8 @@ useEffect(() => {
 
       formData.append('Id', Id);
       formData.append('img_link', imageName);
-     
+      formData.append('pseudo', pseudo);
+
       const response = await fetch(BASE_URL + 'update_image', {
         method: 'POST',
         headers: {
@@ -151,7 +188,8 @@ useEffect(() => {
 
       formData.append('Id', Id);
       formData.append('img_couverture', imagecouverture);
-
+      formData.append('pseudo', pseudo);
+      
       const response = await fetch(BASE_URL + 'update_imagecouverture', {
         method: 'POST',
         headers: {
@@ -191,24 +229,9 @@ useEffect(() => {
     }
   };
 
-  useEffect(() => {
-    fetch(BASE_URL + 'users')
-      .then(response => response.json())
-      .then(data => {
-        const filteredData = data.filter(user => user.Pseudo === pseudo);
-        setDonnees(filteredData);
-        if (filteredData.length > 0) {
-          setImgLink(filteredData[0].img_link);
-          setImgcouverture(filteredData[0].img_couverture);
-        }
-      })
-      .catch(error => {
-        console.error('Erreur lors de la récupération des données:', error);
-        setLoading(false);
-      });
-  }, []);
+  
   const defaultAvatar = (sexe) => {
-    return sexe === 'Homme' ? defaultHommeAvatar : defaultfemmeAvatar;
+    return sexe === 'homme' ? defaultHommeAvatar : defaultfemmeAvatar;
   };
 
 
@@ -285,7 +308,7 @@ const renderCurrentInterface = () => {
     }
   }, [loadingProfile, imageLoaded, loadingProfileSuccess]);
 
-
+ 
 
   if (loading) {
     return <SkeletonItem />;
@@ -317,8 +340,9 @@ const renderCurrentInterface = () => {
                 ) : (
                   <Image
 
-                    source={img_couverture ? { uri: BASE_URL + img_couverture } : defaultAvatar(sexe)}
+                    source={couverture ? { uri: BASE_URL + 'assets/images/profile/'+ couverture  } : defaultAvatar(sexe)}
                     style={style.image1}
+                    resizeMode="cover"
                   />
                 )
               )}
@@ -349,7 +373,7 @@ const renderCurrentInterface = () => {
                 loadingProfileSuccess ? (
                   <Text style={style.textsuccesprofile}>Chargement terminé</Text>
                 ) : (
-                  <Image source={img_link ? { uri: BASE_URL + img_link } : defaultAvatar(sexe)} style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]} />
+                  <Image source={photo ? { uri: BASE_URL + 'assets/images/profile/' + photo} : defaultAvatar(sexe)} style={[style.profil, { borderColor: isDarkMode ? '#79328d' : '#ffffff' }]} />
 
                 )
               )}
@@ -370,7 +394,7 @@ const renderCurrentInterface = () => {
           <View>
             <Text style={[style.prenom, {fontFamily: 'custom-font', color: isDarkMode ? '#ffffff' : '#000000' }]}>{pseudo}</Text>
             <Text style={[style.description, {fontFamily: 'objectif-font',color: isDarkMode ? '#ffffff' : '#000000' }]}>
-              "L'amour n'est pas un sentiment, c'est une force, une vertu"
+             {description}
             </Text>
           </View>
           <View style={style.apropos}>
@@ -437,7 +461,7 @@ const style = StyleSheet.create({
   Icon: {
     position: 'absolute',
     right: 15,
-    bottom: 15,
+    bottom: -35,
     backgroundColor: 'white',
     width: 30,
     height: 30,
@@ -447,7 +471,7 @@ const style = StyleSheet.create({
   },
   couverturecontenu: {
     width: '98%',
-    height: 200,
+    height: 250,
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -456,7 +480,7 @@ const style = StyleSheet.create({
   },
   image1: {
     flex: 1,
-    height: 200,
+    height: 250,
     width: '100%',
     borderRadius: 15,
 
@@ -471,7 +495,7 @@ const style = StyleSheet.create({
     height: 100,
     borderRadius: 100,
     marginLeft: 20,
-    marginTop: -50,
+   // marginTop: -50,
     display: 'flex',
     flexDirection: 'column',
   },

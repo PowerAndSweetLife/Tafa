@@ -14,6 +14,9 @@ const firebaseConfig = {
   measurementId: "G-GZEMBD98F4"
 };
 
+// Initialiser Firebase
+const app = initializeApp(firebaseConfig);
+
 const insererHistorique = (searchTerm,Id,key) => {
 // Récupérer une référence à la base de données Firebase
 const db = getDatabase();

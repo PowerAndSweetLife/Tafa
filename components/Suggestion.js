@@ -13,7 +13,7 @@ import { BackHandler } from 'react-native';
 
 const Suggestion = () => {
     const { Monprofil } = useUser();
-    const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
+    const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
     const [donnees, setDonnees] = useState([]);
@@ -44,7 +44,7 @@ const Suggestion = () => {
           .then(response => response.json())
           .then(data => {
             // Filtrer les données pour ne pas inclure l'utilisateur connecté
-            const filteredData = data.filter(item => item.Id !== Id && item.img_link);
+            const filteredData = data.filter(item => item.id !== Id && item.photo);
             setDonnees(filteredData);
             setTimeout(() => setLoading(false), 5000);
           })
@@ -73,11 +73,11 @@ const Suggestion = () => {
             <Pressable onPress={() => onPressProfil(item)}>
                 <View style={styles.ImagContainer}>
                     <Image
-                          source={item.img_link ? { uri: BASE_URL + item.img_link } : defaultAvatar(item.Sexe)}
+                          source={item.photo ? { uri: BASE_URL + 'assets/Images/profile/'+ item.photo } : defaultAvatar(item.sexe)}
                         style={styles.image}
                     />
                 </View>
-                <Text style={styles.Nom}>{item.Nom}</Text>
+                <Text style={styles.Nom}>{item.nom}</Text>
                 </Pressable>
             </View>
         ));

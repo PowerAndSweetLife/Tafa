@@ -17,6 +17,8 @@ const firebaseConfig = {
   measurementId: "G-GZEMBD98F4"
 };
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 const insererDonnees = ( unsubscribe) => {
 // Obtenez une référence à votre base de données
 const db = getDatabase();

@@ -13,6 +13,8 @@ const firebaseConfig = {
     measurementId: "G-GZEMBD98F4"
   };
 
+// Initialiser Firebase
+const app = initializeApp(firebaseConfig);
 
 const supprimerHistorique = (keys) => { // Utilisez une liste de clés comme paramètre
     // Récupérer une référence à la base de données Firebase
@@ -36,4 +38,24 @@ const supprimerHistorique = (keys) => { // Utilisez une liste de clés comme par
 
 export { supprimerHistorique };
 
+const supprimerNotif = (keys) => { // Utilisez une liste de clés comme paramètre
+    // Récupérer une référence à la base de données Firebase
+    const db = getDatabase();
+    
+    // Parcourir chaque clé dans la liste
+    keys.forEach((key) => {
+        // Référence à l'élément spécifique dans la base de données Firebase pour chaque clé
+        const searchTermRef = ref(db, `profiles_visits/${key}`);
+        console.log('Clé à supprimer :', key);
+        // Supprimer uniquement la clé de la base de données Firebase
+        remove(searchTermRef)
+            .then(() => {
+                console.log("Clé supprimée avec succès :", key);
+            })
+            .catch((error) => {
+                console.error("Erreur lors de la suppression de la clé :", key, error);
+            });
+    });
+};
 
+export { supprimerNotif };

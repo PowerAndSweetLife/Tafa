@@ -17,6 +17,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 
 
+
+
+
 const Contenu = () => {
   useEffect(() => {
     loadFonts();
@@ -28,11 +31,9 @@ const Contenu = () => {
   const [donnees, setDonnees] = useState([]);
   const [loading, setLoading] = useState(true);
   const { Monprofil } = useUser();
-  const Id = Monprofil?.id || 'defaultUserId';
-  const Pseudo = Monprofil?.pseudo || 'defaultUserId';
-  const profileimage = Monprofil?.photo || 'photo';
-
-  
+  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 
+  const Pseudo = Monprofil && Monprofil.pseudo ? Monprofil.pseudo : 'defaultUserId';
+  const profileimage = Monprofil && Monprofil.photo ? Monprofil.photo : 'img_link';
   const { isDarkMode } = useTheme();
   const fetchUsersAndFilter = async () => {
     try {
@@ -48,8 +49,6 @@ const Contenu = () => {
       const blockedUsersData = await blockedUsersResponse.json();
       // Filtrer les données pour ne pas inclure l'utilisateur connecté
       const filteredData = usersData.filter(user => user.id !== Id && user.photo);
-     
-
       // Retirer les utilisateurs bloqués par l'utilisateur actuel de la liste de données
       const finalData = filteredData.filter(user => {
         const hasBlockedCurrentUser = blockedUsersData.some(blockedUser => blockedUser.blocking_user_id === Id && blockedUser.blocked_user_id === user.id);
@@ -60,7 +59,7 @@ const Contenu = () => {
 
       setDonnees(finalData);
    
-      setTimeout(() => setLoading(false), 5000);
+      setTimeout(() => setLoading(false), 10000);
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error);
       setLoading(false);
@@ -86,8 +85,8 @@ const Contenu = () => {
     navigation.navigate('Profil', { userData: userData });
   };
   const truncatePseudo = (pseudo) => {
-    if (pseudo.length >= 13) {
-      return pseudo.substring(0, 13) + '...';
+    if (pseudo.length >= 10) {
+      return pseudo.substring(0, 10) + '...';
     }
     return pseudo;
   };
@@ -106,7 +105,7 @@ const Contenu = () => {
         throw new Error('Erreur de réseau');
       } else {
         await updateEnligne(Id);
-       // BackHandler.exitApp();
+        BackHandler.exitApp();
         return true;
 
       }
@@ -144,16 +143,11 @@ const Contenu = () => {
     }
   };
   useEffect(() => {
-    const handleBackPress = () => {
-      // Votre logique de traitement ici
-      return true;
+    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
     };
-  
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-  
-    return () => backHandler.remove();
   }, []);
-  
   useEffect(() => {
     fetchUsersAndFilter(); // Charge les données initiales au montage
   }, []);

@@ -73,7 +73,7 @@ const Navbar = () => {
     };
   
     fetchData();
-  }, [Monprofil.id, previousNotificationCount, notificationsSeen]);
+  }, [Monprofil.Id, previousNotificationCount, notificationsSeen]);
   
 
   const toggleModal = () => {
@@ -100,7 +100,7 @@ const Navbar = () => {
         // Mettre à jour localement les notifications comme lues
         for (const key in data) {
           if (data.hasOwnProperty(key)) {
-            if (data[key].visitedUserId === Monprofil.id && !data[key].lu) {
+            if (data[key].visitedUserId === Monprofil.Id && !data[key].lu) {
               data[key].lu = true;
             }
           }

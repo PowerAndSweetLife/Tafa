@@ -14,7 +14,8 @@ const firebaseConfig = {
 };
 
 // Initialiser Firebase
-const database = getDatabase();
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
 const insererDonnees = (inputValue, Idenvoyermes,Idrecusmes) => {
     try {

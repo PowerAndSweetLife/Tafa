@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, push, onValue } from 'firebase/database';
-import { messaging } from 'firebase/messaging';
-import { getMessaging, onMessage } from 'firebase/messaging';
+import { getDatabase, ref, push , onValue } from 'firebase/database';
+
 
 // Votre configuration Firebase
 const firebaseConfig = {
@@ -20,7 +19,6 @@ const app = initializeApp(firebaseConfig);
 
 const insererDonnees = (Monprofil, Pseudo, profileimage) => {
   const db = getDatabase();
-  const messaging = getMessaging(app);
   const visitesRef = ref(db, 'profiles_visits');
 
   // Obtenir le timestamp actuel
@@ -61,47 +59,15 @@ const insererDonnees = (Monprofil, Pseudo, profileimage) => {
       visitedUserId: Monprofil.id,
       img_link: profileimage,
       visitorUserId: Pseudo,
-      Notifications: `${Pseudo} a visité votre profil`,
+      Notifications: `${Pseudo} a visité votre profil`, 
       timestamp: new Date().toISOString()
     })
-      .then(() => {
-        console.log('Données insérées avec succès !');
-
-        // Envoyer une notification à l'utilisateur visité
-        const notificationMessage = `${Pseudo} a visité votre profil`;
-        console.log(notificationMessage);
-        
-        messaging.getToken().then((currentToken) => {
-          if (currentToken) {
-            onMessage(messaging, (payload) => {
-              console.log('Message received. ', payload);
-            });
-
-            messaging.send({
-              token: currentToken,
-              notification: {
-                title: 'Nouvelle visite de profil',
-                body: notificationMessage,
-              },
-            })
-              .then(() => {
-                console.log('Notification envoyée avec succès !');
-              })
-              .catch((error) => {
-                console.error('Erreur lors de l\'envoi de la notification :', error);
-              });
-          } else {
-            console.log('No registration token available. Request permission to generate one.');
-          }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-        });
-
-      })
-      .catch((error) => {
-        console.error('Erreur lors de l\'insertion des données :', error);
-      });
+    
+    .catch((error) => {
+      console.error('Erreur lors de l\'insertion des données :', error);
+    });
   });
 };
 
-export { insererDonnees };
+
+export { insererDonnees,  };

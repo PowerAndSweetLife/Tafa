@@ -16,7 +16,7 @@ import { Alert } from "react-native";
 
 function Footer() {
   const route = useRoute();
-  const userData = route.params.userData;
+  const userData = route.params.userData; 
 
   const { Monprofil } = useUser();
   const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';//id du userUsers de l'utilisateur connecter 

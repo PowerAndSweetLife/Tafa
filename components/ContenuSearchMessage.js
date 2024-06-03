@@ -17,7 +17,7 @@ const ContenuSearchMessage = () => {
   const { isDarkMode } = useTheme();
   const navigation = useNavigation();
   const { Monprofil } = useUser();
-  const Id = Monprofil && Monprofil.id ? Monprofil.id : 'defaultUserId';
+  const Id = Monprofil && Monprofil.Id ? Monprofil.Id : 'defaultUserId';
   const [donnees, setDonnees] = useState([]);
   const [Idvisited, setIdVisited] = useState(null);
   const [userData, setUserData] = useState([]);
@@ -90,7 +90,7 @@ const ContenuSearchMessage = () => {
             const response = await fetch(BASE_URL + 'users');
             const userData = await response.json();
 
-            const filteredData = userData.filter(user => user.id === id);
+            const filteredData = userData.filter(user => user.Id === id);
             userDataArray.push(filteredData[0]); // On ajoute le premier utilisateur filtré au tableau
           }
           setUserData(userDataArray);
@@ -155,18 +155,18 @@ const ContenuSearchMessage = () => {
       <ScrollView>
         <View style={[styles.Contenaire, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
           {donnees.map((item, index) => {
-            const nom = item.Idrecusmes === Id ? item.Nomenvoyermes : item.Nomrecusmes;
-
-            const profil = item.Idrecusmes === Id ? item.profilenvoyermes : item.profilrecumes;
-            const isUnread = !item.lu;
-            const isCurrentRecipient = item.Idrecusmes === Id;
+              const nom = item.Idrecusmes === Id ? item.Nomenvoyermes : item.Nomrecusmes;
+              const nom2 = item.Idenvoyermes === Id ? 'Vous avez': item.Nomenvoyermes +'  a'   ;
+              const profil = item.Idrecusmes === Id ? item.profilenvoyermes : item.profilrecumes;
+              const isUnread = !item.lu;
+              const isCurrentRecipient = item.Idrecusmes === Id;
             return (
               <Pressable style={styles.Icon} onPress={() => onPressMessages(userData[index], item.id)} key={index}>
                 <View style={[styles.Contenu, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
                   <View style={styles.ContenuProfil}>
                     <Image source={{ uri: BASE_URL + profil }} style={styles.images} />
                     <View style={styles.statutContainer}>
-                      {item.status ? (
+                      {item.enLigne ? (
                         <Text style={styles.statutHorsLigne}></Text>
                       ) : (
                         <View style={styles.statutEnLigne}></View>
@@ -182,11 +182,14 @@ const ContenuSearchMessage = () => {
                     <View style={styles.ContenuMessage}>
                       {item.inputValue ? ( // Vérifiez si inputValue est défini
                         <Text style={[styles.MESSAGES, { fontFamily: 'custom-fontmessage',color: isDarkMode ? '#ffffff' : 'gray' }]} numberOfLines={1} ellipsizeMode="tail">
-                          {item.lu || !isCurrentRecipient ? item.inputValue : <Text style={{ fontWeight: 'bold' }}>{item.inputValue}</Text>}
+                          {item.lu || !isCurrentRecipient ? item.inputValue : <Text style={{fontFamily: 'custom-fontmessageBold'  } }>{item.inputValue}</Text>}
                         </Text>
                       ) : item.Images ? ( // Si inputValue est vide mais Images est défini
-                        <Text style={[styles.MESSAGES, {fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : 'gray' }]}>{nom} a envoyé une photo</Text>
-                      ) : null}
+                        <Text style={[styles.MESSAGES, {fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : 'gray' }]}>{nom2}  envoyé une photo</Text>
+                      ): item.emoji ? ( // Si inputValue est vide mais Images est défini
+                      <Text style={[styles.MESSAGES, {fontFamily: 'custom-fontmessage', color: isDarkMode ? '#ffffff' : 'gray' }]}>{nom2}  envoyé {item.emoji}</Text>
+                    ) : null}
+                    
                     </View>
 
 

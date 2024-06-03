@@ -4,7 +4,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { BASE_URL } from "../helper/url";
-import { BASE_URL_IMAGE } from "../helper/url";
 import { useTheme } from './context/usercontexttheme';
 
 
@@ -39,7 +38,7 @@ const NavMessage = () => {
       <View style={[styles.contenuProfile, { backgroundColor: isDarkMode ? '#000000' : '#ffffff' }]}>
 
         <View style={styles.IMageContenu}>
-          <Image source={{ uri: BASE_URL_IMAGE +'profile/'+ photo }} style={styles.IMage} ></Image>
+          <Image source={{ uri: BASE_URL +'assets/Images/profile/'+ photo }} style={styles.IMage} ></Image>
 
         </View>
 
